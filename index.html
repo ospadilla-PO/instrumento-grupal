@@ -649,31 +649,107 @@ const COL = {
 let grupoActivo = null;
 
 // ─────────────────────────────────────────────────────────
-// FETCH GOOGLE SHEETS
+// FETCH GOOGLE SHEETS (via JSONP — sin CORS)
 // ─────────────────────────────────────────────────────────
-async function fetchSheet() {
-  const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/export?format=csv&gid=${SHEET_GID}`;
-  const res = await fetch(url);
-  if (!res.ok) throw new Error('No se pudo conectar al Sheet');
-  const text = await res.text();
-  return parseCSV(text);
+function fetchSheet() {
+  return new Promise((resolve, reject) => {
+    // Google Sheets gviz llama: google.visualization.Query.setResponse({...})
+    // Interceptamos ese objeto global antes de que se cargue el script
+    if (!window.google) window.google = {};
+    if (!window.google.visualization) window.google.visualization = {};
+    if (!window.google.visualization.Query) window.google.visualization.Query = {};
+
+    window.google.visualization.Query.setResponse = function(data) {
+      clearTimeout(timer);
+      // Limpiar
+      const s = document.getElementById('_gs_script');
+      if (s) s.remove();
+      if (data.status === 'error') {
+        reject(new Error(data.errors && data.errors[0] ? data.errors[0].detailed_message : 'Error del Sheet'));
+        return;
+      }
+      try {
+        resolve(parseGviz(data));
+      } catch(e) {
+        reject(e);
+      }
+    };
+
+    // Sin callback en la URL — Google usará google.visualization.Query.setResponse por defecto
+    const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json&gid=${SHEET_GID}`;
+    const script = document.createElement('script');
+    script.id  = '_gs_script';
+    script.src = url;
+    script.onerror = () => { clearTimeout(timer); reject(new Error('No se pudo cargar el Sheet')); };
+    document.head.appendChild(script);
+
+    const timer = setTimeout(() => {
+      const s = document.getElementById('_gs_script');
+      if (s) s.remove();
+      reject(new Error('Timeout al conectar con Google Sheets'));
+    }, 12000);
+  });
 }
 
-function parseCSV(text) {
-  const lines = text.split('\n');
-  const rows  = lines.map(line => {
-    const result = [];
-    let cur = '', inQ = false;
-    for (let i = 0; i < line.length; i++) {
-      const c = line[i];
-      if (c === '"') { inQ = !inQ; continue; }
-      if (c === ',' && !inQ) { result.push(cur.trim()); cur = ''; continue; }
-      cur += c;
-    }
-    result.push(cur.trim());
-    return result;
+function parseGviz(data) {
+  const headers = data.table.cols.map(c => (c.label || c.id || '').trim());
+  buildColMap(headers);
+  const cols = headers.length;
+  return data.table.rows.map(row => {
+    return Array.from({length: cols}, (_, i) => {
+      const cell = row.c && row.c[i];
+      if (!cell || cell.v === null || cell.v === undefined) return '';
+      if (typeof cell.v === 'string' && cell.v.startsWith('Date(')) return cell.f || cell.v;
+      return String(cell.v);
+    });
   });
-  return rows.slice(1); // quitar encabezado
+}
+
+function buildColMap(headers) {
+  const map = {};
+  headers.forEach((h, i) => { map[h.toLowerCase()] = i; });
+  const find = (...names) => { for (const n of names) { if (map[n] !== undefined) return map[n]; } return -1; };
+
+  COL.nombre           = find('nombre');
+  COL.ap_paterno       = find('apellido_paterno');
+  COL.ap_materno       = find('apellido_materno');
+  COL.ingresos         = find('ingresos_semanales');
+  COL.gastos           = find('gastos_semanales');
+  COL.capacidad        = find('capacidad_pago');
+  COL.exp_grupal       = find('experiencia_grupal');
+  COL.otros_creditos   = find('otros_creditos');
+  COL.monto_solicitado = find('monto_solicitado');
+  COL.ipp_score        = find('ipp_score');
+  COL.ipp_grado        = find('ipp_grado');
+  COL.flujo_neto       = find('flujo_neto');
+  COL.cdc_total_cuentas= find('cdc_total_cuentas');
+  COL.cdc_cuentas_corr = find('cdc_cuentas_corriente');
+  COL.cdc_cuentas_atr  = find('cdc_cuentas_atraso');
+  COL.cdc_saldo_total  = find('cdc_saldo_total');
+  COL.cdc_saldo_vencido= find('cdc_saldo_vencido_total');
+  COL.cdc_max_atraso   = find('cdc_max_peor_atraso');
+  COL.cdc_flags        = find('cdc_flags_prevencion');
+  COL.cdc_tiene_fd     = find('cdc_tiene_fd');
+  COL.cdc_tiene_sg     = find('cdc_tiene_sg');
+  COL.cdc_tiene_im     = find('cdc_tiene_im');
+  COL.cdc_tiene_up     = find('cdc_tiene_up');
+  COL.cdc_tiene_pc     = find('cdc_tiene_pc');
+  COL.cdc_tiene_lo     = find('cdc_tiene_lo');
+  COL.cdc_capa_b       = find('cdc_cuentas_capa_b');
+  COL.cdc_excluidas    = find('cdc_cuentas_excluidas');
+  COL.cdc_capa         = find('cdc_capa_activada');
+  COL.cdc_reglas       = find('cdc_reglas_activadas');
+  COL.cdc_grado_pre    = find('cdc_grado_pre_buro');
+  COL.cdc_grado_final  = find('cdc_grado_final');
+  COL.cdc_score_post   = find('cdc_score_post_buro');
+  COL.cdc_recomend     = find('cdc_recomendacion');
+  COL.grupo_final      = find('nombre del grupo final');
+  COL.ine_coincide     = find('coincidencia_ine');
+  COL.ant_domicilio    = find('antiguedad_domicilio');
+  COL.tipo_domicilio   = find('tipo_domicilio');
+  COL.ant_negocio      = find('antiguedad_negocio');
+  COL.ubicacion_neg    = find('ubicacion_negocio');
+  COL.cdc_total_cons   = find('cdc_total_consultas_12m');
 }
 
 // ─────────────────────────────────────────────────────────
@@ -1026,7 +1102,7 @@ function buildIntegranteCard(r, idx) {
   const saldoV    = num(r,'cdc_saldo_vencido');
   const atrasos   = num(r,'cdc_cuentas_atr');
   const peorAtr   = num(r,'cdc_max_atraso');
-  const consultas = num(r,'cdc_total_consultas_12m') || 0;
+  const consultas = num(r,'cdc_total_cons') || 0;
   const cuentas   = num(r,'cdc_total_cuentas');
   const corr      = num(r,'cdc_cuentas_corr');
   const capa      = v(r,'cdc_capa');
