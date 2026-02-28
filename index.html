@@ -1,0 +1,1212 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Instrumento Grupal</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap');
+
+  :root {
+    --bg: #F2F4F7;
+    --surface: #FFFFFF;
+    --surface2: #F8F9FB;
+    --border: #E4E7EC;
+    --text: #101828;
+    --text2: #475467;
+    --text3: #98A2B3;
+    --green: #12B76A;
+    --green-dark: #027A48;
+    --green-bg: #ECFDF3;
+    --yellow: #F79009;
+    --red: #F04438;
+    --blue: #2E90FA;
+    --radius: 14px;
+    --radius-sm: 8px;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+  }
+
+  /* ─────────────────────────────────────
+     PANTALLA DE BÚSQUEDA
+  ───────────────────────────────────── */
+  #screen-search {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 32px 24px;
+    background: #fff;
+  }
+
+  .search-logo {
+    width: 52px;
+    height: 52px;
+    background: linear-gradient(135deg, #1A6B3A, #3AB56B);
+    border-radius: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    margin-bottom: 20px;
+  }
+
+  .search-title {
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--text);
+    margin-bottom: 6px;
+    text-align: center;
+  }
+
+  .search-subtitle {
+    font-size: 14px;
+    color: var(--text3);
+    text-align: center;
+    margin-bottom: 32px;
+  }
+
+  .search-box {
+    width: 100%;
+    max-width: 400px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .search-input {
+    width: 100%;
+    padding: 14px 16px;
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius-sm);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 15px;
+    color: var(--text);
+    outline: none;
+    transition: border-color 0.15s;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  .search-input::placeholder { text-transform: none; letter-spacing: 0; color: var(--text3); }
+  .search-input:focus { border-color: #1A6B3A; }
+
+  .search-btn {
+    width: 100%;
+    padding: 14px;
+    background: #1A6B3A;
+    color: #fff;
+    border: none;
+    border-radius: var(--radius-sm);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.15s;
+  }
+  .search-btn:hover { background: #155C31; }
+  .search-btn:disabled { background: var(--text3); cursor: not-allowed; }
+
+  .search-error {
+    font-size: 13px;
+    color: var(--red);
+    text-align: center;
+    margin-top: 4px;
+    display: none;
+  }
+
+  .search-loading {
+    font-size: 13px;
+    color: var(--text3);
+    text-align: center;
+    margin-top: 4px;
+    display: none;
+  }
+
+  /* ─────────────────────────────────────
+     INSTRUMENTO
+  ───────────────────────────────────── */
+  #screen-instrument {
+    display: none;
+    padding-bottom: 100px;
+  }
+
+  .app {
+    max-width: 480px;
+    margin: 0 auto;
+    padding: 0 16px;
+  }
+
+  /* back button */
+  .back-bar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 14px 16px 0;
+    max-width: 480px;
+    margin: 0 auto;
+  }
+  .back-btn {
+    font-size: 13px;
+    color: var(--text3);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    background: none;
+    border: none;
+    font-family: 'DM Sans', sans-serif;
+  }
+  .back-btn:hover { color: var(--text2); }
+
+  /* ── HEADER GRUPO ── */
+  .grupo-header {
+    background: linear-gradient(145deg, #1A6B3A 0%, #2D9B5E 60%, #3AB56B 100%);
+    border-radius: 0 0 24px 24px;
+    padding: 20px 24px 28px;
+    margin: 0 -16px 20px;
+    position: relative;
+    overflow: hidden;
+  }
+  .grupo-header::before {
+    content: '';
+    position: absolute;
+    top: -30px; right: -30px;
+    width: 140px; height: 140px;
+    background: rgba(255,255,255,0.07);
+    border-radius: 50%;
+  }
+  .grupo-header::after {
+    content: '';
+    position: absolute;
+    bottom: -50px; right: 60px;
+    width: 100px; height: 100px;
+    background: rgba(255,255,255,0.05);
+    border-radius: 50%;
+  }
+
+  .grupo-label {
+    font-size: 10px;
+    font-weight: 600;
+    color: rgba(255,255,255,0.6);
+    letter-spacing: 1.2px;
+    text-transform: uppercase;
+    margin-bottom: 6px;
+  }
+
+  .grupo-nombre {
+    font-size: 28px;
+    font-weight: 700;
+    color: #fff;
+    line-height: 1.1;
+    margin-bottom: 16px;
+  }
+  .grupo-count {
+    font-size: 40px;
+    font-weight: 700;
+    color: #fff;
+    line-height: 1;
+  }
+  .grupo-count-label {
+    font-size: 11px;
+    color: rgba(255,255,255,0.65);
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    margin-bottom: 14px;
+  }
+  .grado-badges {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+  .grado-badge {
+    padding: 5px 12px;
+    border-radius: 20px;
+    font-size: 13px;
+    font-weight: 600;
+    font-family: 'DM Mono', monospace;
+  }
+  .badge-A { background: #27AE60; color: #fff; }
+  .badge-B { background: #8A7A2E; color: #fff; }
+  .badge-C { background: #B45309; color: #fff; }
+  .badge-D { background: #7F1D1D; color: #fff; }
+
+  /* ── SECTION CARDS ── */
+  .section-card {
+    background: var(--surface);
+    border-radius: var(--radius);
+    border: 1px solid var(--border);
+    margin-bottom: 12px;
+    overflow: hidden;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+  }
+
+  .section-toggle {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 18px;
+    cursor: pointer;
+    user-select: none;
+    transition: background 0.15s;
+  }
+  .section-toggle:hover { background: var(--surface2); }
+
+  .section-left {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .section-icon {
+    width: 38px;
+    height: 38px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    flex-shrink: 0;
+  }
+  .icon-alert { background: #FEF9C3; }
+  .icon-pago  { background: #DCFCE7; }
+  .icon-det   { background: #DBEAFE; }
+
+  .section-title    { font-size: 15px; font-weight: 600; color: var(--text); }
+  .section-subtitle { font-size: 12px; color: var(--text3); margin-top: 1px; }
+
+  .section-badge {
+    font-size: 13px; font-weight: 600;
+    padding: 4px 10px; border-radius: 20px;
+    margin-right: 6px;
+  }
+  .badge-danger  { background: #FEE2E2; color: #B91C1C; }
+  .badge-success { background: #DCFCE7; color: #166534; }
+  .badge-warn    { background: #FEF9C3; color: #854D0E; }
+
+  .chevron { font-size: 12px; color: var(--text3); transition: transform 0.2s; }
+  .chevron.open { transform: rotate(180deg); }
+
+  .section-body { display: none; border-top: 1px solid var(--border); }
+  .section-body.open { display: block; }
+
+  /* ── ALERTAS ── */
+  .alerta-item {
+    padding: 14px 18px;
+    border-bottom: 1px solid var(--border);
+  }
+  .alerta-item:last-child { border-bottom: none; }
+  .alerta-header {
+    display: flex; justify-content: space-between; align-items: flex-start;
+    margin-bottom: 6px;
+  }
+  .alerta-nombre { font-size: 14px; font-weight: 600; color: var(--text); }
+  .alerta-count  { font-size: 12px; font-weight: 600; color: var(--text3);
+                   font-family: 'DM Mono', monospace; flex-shrink: 0; margin-left: 8px; }
+  .alerta-desc   { font-size: 13px; color: var(--text2); line-height: 1.5; }
+
+  .alerta-table  { width: 100%; font-size: 12px; margin-top: 10px; border-collapse: collapse; }
+  .alerta-table th { text-align: left; color: var(--text3); font-weight: 500;
+                     padding: 4px 0; border-bottom: 1px solid var(--border); }
+  .alerta-table td { padding: 5px 0; color: var(--text2); border-bottom: 1px solid var(--bg); vertical-align: top; }
+  .alerta-table td:last-child { text-align: right; font-family: 'DM Mono', monospace; font-weight: 500; }
+
+  .no-alerta { font-size: 13px; color: var(--green-dark); display: flex; align-items: center; gap: 8px; }
+  .alerta-footer { margin-top: 6px; font-size: 11px; color: var(--text3); }
+
+  /* ── CAPACIDAD DE PAGO ── */
+  .cp-row {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 13px 18px; border-bottom: 1px solid var(--border); font-size: 14px;
+  }
+  .cp-row:last-child { border-bottom: none; }
+  .cp-label { color: var(--text2); }
+  .cp-value { font-weight: 600; color: var(--text); font-family: 'DM Mono', monospace; }
+  .cp-value.green  { color: var(--green-dark); }
+  .cp-value.orange { color: var(--yellow); }
+  .cp-value.red    { color: var(--red); }
+
+  /* ── FILTROS ── */
+  .filter-tabs {
+    display: flex; gap: 6px; padding: 12px 18px;
+    overflow-x: auto; border-bottom: 1px solid var(--border);
+    scrollbar-width: none;
+  }
+  .filter-tabs::-webkit-scrollbar { display: none; }
+  .filter-tab {
+    padding: 5px 12px; border-radius: 20px; font-size: 12px; font-weight: 600;
+    cursor: pointer; white-space: nowrap; border: 1px solid var(--border);
+    background: var(--surface2); color: var(--text2); transition: all 0.15s;
+  }
+  .filter-tab.active, .filter-tab:hover { background: var(--text); color: #fff; border-color: var(--text); }
+  .filter-tab.A.active { background: #166534; border-color: #166534; }
+  .filter-tab.B.active { background: #854D0E; border-color: #854D0E; }
+  .filter-tab.C.active { background: #9A3412; border-color: #9A3412; }
+  .filter-tab.D.active { background: #7F1D1D; border-color: #7F1D1D; }
+
+  /* ── INTEGRANTE CARD ── */
+  .integrante-card { border-bottom: 1px solid var(--border); }
+  .integrante-card:last-child { border-bottom: none; }
+
+  .integrante-header {
+    display: flex; align-items: flex-start; justify-content: space-between;
+    padding: 14px 18px;
+  }
+  .integrante-left { flex: 1; }
+  .integrante-nombre { font-size: 14px; font-weight: 700; color: var(--text); margin-bottom: 3px; line-height: 1.2; }
+  .integrante-meta   { font-size: 12px; color: var(--text3); margin-bottom: 8px; }
+  .integrante-tags   { display: flex; flex-wrap: wrap; gap: 5px; }
+
+  .tag { font-size: 11px; font-weight: 500; padding: 3px 8px; border-radius: 20px; }
+  .tag-red    { background: #FEE2E2; color: #991B1B; }
+  .tag-orange { background: #FEF3C7; color: #92400E; }
+  .tag-green  { background: #DCFCE7; color: #166534; }
+  .tag-blue   { background: #DBEAFE; color: #1E40AF; }
+  .tag-gray   { background: #F3F4F6; color: #4B5563; }
+
+  .score-box { text-align: right; flex-shrink: 0; margin-left: 12px; }
+  .score-num { font-size: 26px; font-weight: 700; font-family: 'DM Mono', monospace; line-height: 1; }
+  .score-cal { font-size: 10px; font-weight: 600; color: var(--text3); letter-spacing: 0.5px; margin-top: 2px; }
+  .score-D { color: #B91C1C; }
+  .score-C { color: #C2410C; }
+  .score-B { color: #92400E; }
+  .score-A { color: #166534; }
+
+  .detalle-toggle {
+    font-size: 12px; color: var(--blue); font-weight: 500; cursor: pointer;
+    padding: 0 18px 12px; display: flex; align-items: center; gap: 6px;
+    user-select: none;
+  }
+
+  /* ── DETALLE EXPANDIDO ── */
+  .detalle-expand { display: none; border-top: 1px solid var(--border); background: var(--surface2); }
+  .detalle-expand.open { display: block; }
+
+  .detalle-tabs { display: flex; border-bottom: 1px solid var(--border); }
+  .detalle-tab {
+    flex: 1; padding: 10px; text-align: center; font-size: 12px; font-weight: 600;
+    color: var(--text3); cursor: pointer; border-bottom: 2px solid transparent; transition: all 0.15s;
+  }
+  .detalle-tab.active { color: var(--green-dark); border-bottom-color: var(--green-dark); }
+
+  .detalle-panel { display: none; padding: 14px 18px; }
+  .detalle-panel.active { display: block; }
+
+  .capa-row { display: flex; align-items: flex-start; gap: 10px; padding: 10px 0; border-bottom: 1px solid var(--border); }
+  .capa-row:last-child { border-bottom: none; }
+  .capa-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; margin-top: 3px; }
+  .dot-red   { background: var(--red); }
+  .dot-green { background: var(--green); }
+  .dot-orange{ background: var(--yellow); }
+  .capa-label { font-size: 10px; font-weight: 600; color: var(--text3); letter-spacing: 0.5px; text-transform: uppercase; margin-bottom: 2px; }
+  .capa-val   { font-size: 13px; font-weight: 600; color: var(--text); }
+  .capa-val.red   { color: var(--red); }
+  .capa-val.green { color: var(--green-dark); }
+  .capa-val.orange{ color: var(--yellow); }
+
+  .score-detail-row {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 10px 0; border-bottom: 1px solid var(--border); font-size: 13px;
+  }
+  .score-detail-row:last-child { border-bottom: none; }
+  .score-detail-label { color: var(--text2); }
+  .score-detail-val   { font-weight: 600; font-family: 'DM Mono', monospace; }
+
+  .cdc-cuenta { padding: 10px 0; border-bottom: 1px solid var(--border); }
+  .cdc-cuenta:last-child { border-bottom: none; }
+  .cdc-cuenta-nombre { font-size: 13px; font-weight: 600; color: var(--text); margin-bottom: 3px; }
+  .cdc-cuenta-info   { font-size: 12px; color: var(--text3); font-family: 'DM Mono', monospace; }
+  .cdc-cuenta-status { font-size: 11px; font-weight: 600; margin-top: 4px; }
+  .status-atraso { color: var(--red); }
+  .status-ok     { color: var(--green-dark); }
+
+  .consultas-box {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--radius-sm); padding: 12px; margin-top: 12px;
+    font-size: 13px; display: flex; justify-content: space-between; align-items: center;
+  }
+  .consultas-label { color: var(--text2); }
+  .consultas-val   { font-weight: 700; font-family: 'DM Mono', monospace; font-size: 16px; }
+  .consultas-val.high { color: var(--red); }
+  .consultas-val.ok   { color: var(--green-dark); }
+
+  /* ── BOTÓN AVANZAR ── */
+  .avanzar-bar {
+    position: fixed;
+    bottom: 0; left: 0; right: 0;
+    background: #fff;
+    border-top: 1px solid var(--border);
+    padding: 14px 20px;
+    display: none;
+    z-index: 100;
+  }
+  .avanzar-bar.visible { display: block; }
+  .avanzar-btn {
+    display: block;
+    width: 100%;
+    max-width: 480px;
+    margin: 0 auto;
+    padding: 15px;
+    background: #1A6B3A;
+    color: #fff;
+    border: none;
+    border-radius: var(--radius-sm);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    text-align: center;
+    transition: background 0.15s;
+    text-decoration: none;
+  }
+  .avanzar-btn:hover { background: #155C31; }
+
+  /* ── EMPTY STATE ── */
+  .empty-state {
+    text-align: center;
+    padding: 40px 20px;
+    color: var(--text3);
+    font-size: 14px;
+  }
+</style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════
+     PANTALLA 1: BÚSQUEDA
+═══════════════════════════════ -->
+<div id="screen-search">
+  <div class="search-logo">📋</div>
+  <div class="search-title">Instrumento Grupal</div>
+  <div class="search-subtitle">Consulta el perfil consolidado de un grupo</div>
+
+  <div class="search-box">
+    <input
+      type="text"
+      id="input-grupo"
+      class="search-input"
+      placeholder="Nombre del grupo (ej. LAS PODEROSAS)"
+      autocomplete="off"
+      autocorrect="off"
+      autocapitalize="characters"
+    />
+    <button class="search-btn" id="btn-buscar" onclick="buscarGrupo()">
+      Consultar grupo
+    </button>
+    <div class="search-error" id="search-error">Grupo no encontrado. Verifica el nombre e intenta de nuevo.</div>
+    <div class="search-loading" id="search-loading">Consultando datos… un momento</div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════
+     PANTALLA 2: INSTRUMENTO
+═══════════════════════════════ -->
+<div id="screen-instrument">
+
+  <div class="back-bar">
+    <button class="back-btn" onclick="volverBusqueda()">← Buscar otro grupo</button>
+  </div>
+
+  <div class="app">
+
+    <!-- HEADER GRUPO -->
+    <div class="grupo-header">
+      <div class="grupo-label">Resumen del grupo</div>
+      <div class="grupo-nombre" id="g-nombre">—</div>
+      <div class="grupo-count" id="g-count">—</div>
+      <div class="grupo-count-label">Integrantes</div>
+      <div class="grado-badges" id="g-badges"></div>
+    </div>
+
+    <!-- ALERTAS GRUPALES -->
+    <div class="section-card">
+      <div class="section-toggle" onclick="toggleSection('alertas')">
+        <div class="section-left">
+          <div class="section-icon icon-alert">⚠️</div>
+          <div>
+            <div class="section-title">Alertas Grupales</div>
+            <div class="section-subtitle">Revisar antes de la visita</div>
+          </div>
+        </div>
+        <div style="display:flex;align-items:center;gap:6px">
+          <span class="section-badge badge-danger" id="badge-alertas">— activas</span>
+          <span class="chevron" id="chevron-alertas">▼</span>
+        </div>
+      </div>
+      <div class="section-body" id="body-alertas">
+        <div id="alertas-content"><div class="empty-state">Cargando alertas…</div></div>
+      </div>
+    </div>
+
+    <!-- CAPACIDAD DE PAGO -->
+    <div class="section-card">
+      <div class="section-toggle" onclick="toggleSection('pago')">
+        <div class="section-left">
+          <div class="section-icon icon-pago">💰</div>
+          <div>
+            <div class="section-title">Capacidad de Pago</div>
+            <div class="section-subtitle">Análisis grupal de solvencia</div>
+          </div>
+        </div>
+        <div style="display:flex;align-items:center;gap:6px">
+          <span class="section-badge badge-warn" id="badge-pago">—</span>
+          <span class="chevron" id="chevron-pago">▼</span>
+        </div>
+      </div>
+      <div class="section-body" id="body-pago">
+        <div id="pago-content"><div class="empty-state">Cargando…</div></div>
+      </div>
+    </div>
+
+    <!-- DETALLE POR INTEGRANTE -->
+    <div class="section-card">
+      <div class="section-toggle" onclick="toggleSection('detalle')">
+        <div class="section-left">
+          <div class="section-icon icon-det">👥</div>
+          <div>
+            <div class="section-title">Detalle por Integrante</div>
+            <div class="section-subtitle" id="detalle-subtitle">— integrantes · Scores IPP</div>
+          </div>
+        </div>
+        <div style="display:flex;align-items:center;gap:6px">
+          <span class="section-badge badge-danger" id="badge-detalle">—</span>
+          <span class="chevron open" id="chevron-detalle">▼</span>
+        </div>
+      </div>
+      <div class="section-body open" id="body-detalle">
+        <div id="detalle-content"><div class="empty-state">Cargando integrantes…</div></div>
+      </div>
+    </div>
+
+  </div><!-- /app -->
+</div><!-- /screen-instrument -->
+
+<!-- BOTÓN AVANZAR -->
+<div class="avanzar-bar" id="avanzar-bar">
+  <a href="#" id="avanzar-btn" class="avanzar-btn" onclick="avanzarVisita(event)">
+    Avanzar a la visita única →
+  </a>
+</div>
+
+<script>
+// ─────────────────────────────────────────────────────────
+// CONFIGURACIÓN
+// ─────────────────────────────────────────────────────────
+const SHEET_ID  = '1kC89wVcE-6G96Y6WCEDjElAdLWbKwL_SaqHQDR8I7iY';
+const SHEET_GID = '1077826375';
+// URL de la visita única (definir cuando esté lista)
+const URL_VISITA_UNICA = '#'; // ← reemplazar con la URL real
+
+// Columnas (0-indexed) según el sheet
+const COL = {
+  nombre:             2,
+  ap_paterno:         3,
+  ap_materno:         4,
+  ingresos:          23,
+  gastos:            24,
+  capacidad:         25,
+  exp_grupal:        26,
+  otros_creditos:    27,
+  monto_solicitado:  28,
+  ipp_score:         29,
+  ipp_grado:         30,
+  flujo_neto:        31,
+  cdc_total_cuentas: 36,
+  cdc_cuentas_corr:  37,
+  cdc_cuentas_atr:   38,
+  cdc_saldo_total:   39,
+  cdc_saldo_vencido: 40,
+  cdc_max_atraso:    41,
+  cdc_flags:         42,
+  cdc_tiene_fd:      43,
+  cdc_tiene_sg:      44,
+  cdc_tiene_im:      45,
+  cdc_tiene_up:      46,
+  cdc_tiene_pc:      47,
+  cdc_tiene_lo:      48,
+  cdc_capa_b:        49,
+  cdc_excluidas:     50,
+  cdc_capa:          51,
+  cdc_reglas:        52,
+  cdc_grado_pre:     53,
+  cdc_grado_final:   54,
+  cdc_score_post:    55,
+  cdc_recomend:      56,
+  grupo_final:       57,
+  ine_coincide:      20,
+  ant_domicilio:     18,
+  tipo_domicilio:    19,
+  ant_negocio:       21,
+  ubicacion_neg:     22,
+};
+
+let grupoActivo = null;
+
+// ─────────────────────────────────────────────────────────
+// FETCH GOOGLE SHEETS
+// ─────────────────────────────────────────────────────────
+async function fetchSheet() {
+  const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/export?format=csv&gid=${SHEET_GID}`;
+  const res = await fetch(url);
+  if (!res.ok) throw new Error('No se pudo conectar al Sheet');
+  const text = await res.text();
+  return parseCSV(text);
+}
+
+function parseCSV(text) {
+  const lines = text.split('\n');
+  const rows  = lines.map(line => {
+    const result = [];
+    let cur = '', inQ = false;
+    for (let i = 0; i < line.length; i++) {
+      const c = line[i];
+      if (c === '"') { inQ = !inQ; continue; }
+      if (c === ',' && !inQ) { result.push(cur.trim()); cur = ''; continue; }
+      cur += c;
+    }
+    result.push(cur.trim());
+    return result;
+  });
+  return rows.slice(1); // quitar encabezado
+}
+
+// ─────────────────────────────────────────────────────────
+// BÚSQUEDA
+// ─────────────────────────────────────────────────────────
+async function buscarGrupo() {
+  const query = document.getElementById('input-grupo').value.trim().toUpperCase();
+  if (!query) return;
+
+  const btn = document.getElementById('btn-buscar');
+  const err = document.getElementById('search-error');
+  const ldr = document.getElementById('search-loading');
+
+  btn.disabled = true;
+  err.style.display = 'none';
+  ldr.style.display = 'block';
+
+  try {
+    const rows = await fetchSheet();
+    const integrantes = rows.filter(r => {
+      const g = (r[COL.grupo_final] || '').trim().toUpperCase();
+      return g === query;
+    });
+
+    if (integrantes.length === 0) {
+      err.style.display = 'block';
+      return;
+    }
+
+    grupoActivo = query;
+    renderInstrumento(query, integrantes);
+    document.getElementById('screen-search').style.display = 'none';
+    document.getElementById('screen-instrument').style.display = 'block';
+    document.getElementById('avanzar-bar').classList.add('visible');
+    window.scrollTo(0, 0);
+
+  } catch (e) {
+    err.textContent = 'Error al conectar. Verifica tu conexión e intenta de nuevo.';
+    err.style.display = 'block';
+  } finally {
+    btn.disabled = false;
+    ldr.style.display = 'none';
+  }
+}
+
+document.getElementById('input-grupo').addEventListener('keydown', e => {
+  if (e.key === 'Enter') buscarGrupo();
+});
+
+function volverBusqueda() {
+  document.getElementById('screen-instrument').style.display = 'none';
+  document.getElementById('avanzar-bar').classList.remove('visible');
+  document.getElementById('screen-search').style.display = 'flex';
+  grupoActivo = null;
+}
+
+function avanzarVisita(e) {
+  if (URL_VISITA_UNICA === '#') {
+    e.preventDefault();
+    alert('La URL de la visita única aún no está configurada.');
+    return;
+  }
+  window.location.href = URL_VISITA_UNICA + '?grupo=' + encodeURIComponent(grupoActivo);
+}
+
+// ─────────────────────────────────────────────────────────
+// HELPERS
+// ─────────────────────────────────────────────────────────
+const v = (r, k) => r[COL[k]] || '';
+const num = (r, k) => parseFloat(v(r, k)) || 0;
+const fmt = n => '$' + Number(n).toLocaleString('es-MX');
+
+function fullName(r) {
+  return [v(r,'nombre'), v(r,'ap_paterno'), v(r,'ap_materno')]
+    .filter(Boolean).join(' ').toUpperCase();
+}
+
+function gradoColor(g) {
+  return { A: 'score-A', B: 'score-B', C: 'score-C', D: 'score-D' }[g] || '';
+}
+
+function gradoBadgeClass(g) {
+  return { A: 'badge-A', B: 'badge-B', C: 'badge-C', D: 'badge-D' }[g] || '';
+}
+
+function tagFromRecomend(r) {
+  const rec = v(r, 'cdc_recomend');
+  if (rec.includes('RECHAZAR')) return '<span class="tag tag-red">🚫 Rechazar</span>';
+  if (rec.includes('APROBAR'))  return '<span class="tag tag-green">✓ Aprobar</span>';
+  return '<span class="tag tag-orange">⚠ Revisar</span>';
+}
+
+// ─────────────────────────────────────────────────────────
+// RENDER INSTRUMENTO
+// ─────────────────────────────────────────────────────────
+function renderInstrumento(nombre, rows) {
+  // ── Header ──
+  document.getElementById('g-nombre').textContent = toTitleCase(nombre);
+  document.getElementById('g-count').textContent  = rows.length;
+  document.getElementById('detalle-subtitle').textContent = `${rows.length} integrantes · Scores IPP`;
+
+  // Contar grados (post-buro final)
+  const gradoCount = { A: 0, B: 0, C: 0, D: 0 };
+  rows.forEach(r => {
+    const g = v(r, 'cdc_grado_final').trim().toUpperCase();
+    if (gradoCount[g] !== undefined) gradoCount[g]++;
+  });
+  const badgesEl = document.getElementById('g-badges');
+  badgesEl.innerHTML = Object.entries(gradoCount)
+    .filter(([,n]) => n > 0)
+    .map(([g, n]) => `<span class="grado-badge ${gradoBadgeClass(g)}">${g} · ${n}</span>`)
+    .join('');
+
+  // ── Alertas ──
+  renderAlertas(rows);
+
+  // ── Capacidad de Pago ──
+  renderCapacidadPago(rows);
+
+  // ── Detalle ──
+  renderDetalle(rows);
+
+  // Badge detalle (Cal. D count)
+  const dCount = gradoCount['D'];
+  const bdEl = document.getElementById('badge-detalle');
+  if (dCount > 0) {
+    bdEl.textContent = `${dCount} Cal. D`;
+    bdEl.className   = 'section-badge badge-danger';
+  } else {
+    bdEl.textContent = 'Sin Cal. D';
+    bdEl.className   = 'section-badge badge-success';
+  }
+}
+
+// ─────────────────────────────────────────────────────────
+// ALERTAS GRUPALES (6 reglas)
+// ─────────────────────────────────────────────────────────
+function renderAlertas(rows) {
+  let html = '';
+  let activas = 0;
+  const n = rows.length;
+
+  // ── Regla 1: Deuda individual alta (>$25K)
+  const r1 = rows.filter(r => num(r,'cdc_saldo_total') > 25000);
+  if (r1.length > 0) {
+    activas++;
+    html += `<div class="alerta-item">
+      <div class="alerta-header">
+        <div class="alerta-nombre">Deuda individual alta</div>
+        <div class="alerta-count">${r1.length} / ${n}</div>
+      </div>
+      <div class="alerta-desc">${r1.length} integrante(s) con deuda total mayor a $25,000.</div>
+      <table class="alerta-table">
+        <tr><th>Integrante</th><th>Deuda total</th></tr>
+        ${r1.map(r => `<tr><td>${fullName(r)}</td><td>${fmt(num(r,'cdc_saldo_total'))}</td></tr>`).join('')}
+      </table>
+      <div class="alerta-footer">Deuda individual &gt; $25K: ${r1.length} integrante(s)</div>
+    </div>`;
+  } else {
+    html += `<div class="alerta-item">
+      <div class="alerta-header"><div class="alerta-nombre">Deuda individual alta</div><div class="alerta-count">0 / ${n}</div></div>
+      <div class="no-alerta">✅ Ningún integrante supera $25,000 de deuda total.</div>
+    </div>`;
+  }
+
+  // ── Regla 2: 3+ instituciones con deuda >$15K
+  const r2 = rows.filter(r => num(r,'cdc_total_cuentas') >= 3 && num(r,'cdc_saldo_total') > 15000);
+  if (r2.length > 0) {
+    activas++;
+    html += `<div class="alerta-item">
+      <div class="alerta-header">
+        <div class="alerta-nombre">Múltiples instituciones con deuda</div>
+        <div class="alerta-count">${r2.length} / ${n}</div>
+      </div>
+      <div class="alerta-desc">${r2.length} integrante(s) con 3+ cuentas y deuda total mayor a $15,000.</div>
+      <table class="alerta-table">
+        <tr><th>Integrante</th><th>Cuentas</th><th>Deuda</th></tr>
+        ${r2.map(r => `<tr><td>${fullName(r)}</td><td>${num(r,'cdc_total_cuentas')}</td><td>${fmt(num(r,'cdc_saldo_total'))}</td></tr>`).join('')}
+      </table>
+      <div class="alerta-footer">3+ instituciones con deuda: ${r2.length} integrante(s)</div>
+    </div>`;
+  } else {
+    html += `<div class="alerta-item">
+      <div class="alerta-header"><div class="alerta-nombre">Múltiples instituciones con deuda</div><div class="alerta-count">0 / ${n}</div></div>
+      <div class="no-alerta">✅ Sin integrantes con 3+ cuentas y deuda relevante.</div>
+    </div>`;
+  }
+
+  // ── Regla 3: Posibles familiares (apellidos compartidos ≥3)
+  const apellidos = rows.map(r => [v(r,'ap_paterno'), v(r,'ap_materno')].filter(Boolean));
+  const apCount = {};
+  apellidos.forEach(aps => aps.forEach(ap => {
+    const key = ap.trim().toUpperCase();
+    if (key) apCount[key] = (apCount[key] || 0) + 1;
+  }));
+  const familiares = Object.entries(apCount).filter(([,c]) => c >= 3);
+  if (familiares.length > 0) {
+    activas++;
+    html += `<div class="alerta-item">
+      <div class="alerta-header">
+        <div class="alerta-nombre">Posibles familiares</div>
+        <div class="alerta-count">Detectado</div>
+      </div>
+      <div class="alerta-desc">Se detectaron apellidos compartidos por 3 o más integrantes.</div>
+      <table class="alerta-table">
+        <tr><th>Apellido</th><th>Coincidencias</th></tr>
+        ${familiares.map(([ap, c]) => `<tr><td>${ap}</td><td>${c}</td></tr>`).join('')}
+      </table>
+      <div class="alerta-footer">Posibles familiares: firma(s) con ≥3 coincidencias</div>
+    </div>`;
+  } else {
+    html += `<div class="alerta-item">
+      <div class="alerta-header"><div class="alerta-nombre">Posibles familiares</div><div class="alerta-count">Sin coincidencias</div></div>
+      <div class="no-alerta">✅ No se detectaron 3+ integrantes con apellidos compartidos.</div>
+    </div>`;
+  }
+
+  // ── Regla 4: IPP grado D
+  const r4 = rows.filter(r => v(r,'cdc_grado_final').trim().toUpperCase() === 'D');
+  if (r4.length > 0) {
+    activas++;
+    html += `<div class="alerta-item">
+      <div class="alerta-header">
+        <div class="alerta-nombre">Atención en buró / IPP grado D</div>
+        <div class="alerta-count">${r4.length} / ${n}</div>
+      </div>
+      <div class="alerta-desc">${r4.length} integrante(s) con calificación post-buró grado D.</div>
+      <table class="alerta-table">
+        <tr><th>Integrante</th><th>Motivo</th></tr>
+        ${r4.map(r => `<tr><td>${fullName(r)}</td><td>${(v(r,'cdc_reglas') || '—').split('|')[0].replace(/📉|📊/g,'').trim()}</td></tr>`).join('')}
+      </table>
+    </div>`;
+  } else {
+    html += `<div class="alerta-item">
+      <div class="alerta-header"><div class="alerta-nombre">Atención en buró / IPP grado D</div><div class="alerta-count">0 / ${n}</div></div>
+      <div class="no-alerta">✅ Ningún integrante con calificación D.</div>
+    </div>`;
+  }
+
+  // ── Regla 5: Disparidad de montos (max ≥ 2× min)
+  const montos = rows.map(r => ({ name: fullName(r), m: num(r,'monto_solicitado') })).filter(x => x.m > 0);
+  const minM = montos.reduce((a,b) => a.m < b.m ? a : b, montos[0] || {m:0});
+  const maxM = montos.reduce((a,b) => a.m > b.m ? a : b, montos[0] || {m:0});
+  const ratio = minM.m > 0 ? (maxM.m / minM.m) : 0;
+  if (ratio >= 1.5) {
+    activas++;
+    html += `<div class="alerta-item">
+      <div class="alerta-header">
+        <div class="alerta-nombre">Disparidad de montos solicitados</div>
+        <div class="alerta-count">Ratio ${ratio.toFixed(1)}×</div>
+      </div>
+      <div class="alerta-desc">El monto máximo es ${ratio.toFixed(1)}× el mínimo. Visualizar riesgo solidario.</div>
+      <table class="alerta-table">
+        <tr><th>Integrante mínimo</th><th>Monto</th></tr>
+        <tr><td>${minM.name}</td><td>${fmt(minM.m)}</td></tr>
+        <tr><th>Integrante máximo</th><th>Monto</th></tr>
+        <tr><td>${maxM.name}</td><td>${fmt(maxM.m)}</td></tr>
+      </table>
+      <div class="alerta-footer">Disparidad de montos &gt;50%</div>
+    </div>`;
+  } else {
+    html += `<div class="alerta-item">
+      <div class="alerta-header"><div class="alerta-nombre">Disparidad de montos solicitados</div><div class="alerta-count">Sin disparidad</div></div>
+      <div class="no-alerta">✅ Los montos solicitados son consistentes entre integrantes.</div>
+    </div>`;
+  }
+
+  // ── Regla 6: Zona roja (sin datos disponibles en el sheet actual)
+  html += `<div class="alerta-item">
+    <div class="alerta-header">
+      <div class="alerta-nombre">Integrantes en zona roja</div>
+      <div class="alerta-count">Sin datos</div>
+    </div>
+    <div class="no-alerta">ℹ️ Dato no disponible — Sin cruce de dirección con zona roja.</div>
+  </div>`;
+
+  document.getElementById('alertas-content').innerHTML = html;
+  document.getElementById('badge-alertas').textContent = `${activas} activas`;
+}
+
+// ─────────────────────────────────────────────────────────
+// CAPACIDAD DE PAGO
+// ─────────────────────────────────────────────────────────
+function renderCapacidadPago(rows) {
+  const n = rows.length;
+  const ingresos  = rows.map(r => num(r,'ingresos')).filter(x => x > 10);
+  const flujos    = rows.map(r => num(r,'flujo_neto')).filter(x => x !== 0);
+  const caps      = rows.map(r => num(r,'capacidad')).filter(x => x > 0);
+  const montos    = rows.map(r => num(r,'monto_solicitado'));
+  const vencidos  = rows.map(r => num(r,'cdc_saldo_vencido'));
+  const conExp    = rows.filter(r => num(r,'cdc_total_cuentas') > 0).length;
+
+  const avgIngreso = ingresos.length  ? ingresos.reduce((a,b)=>a+b,0)/ingresos.length   : 0;
+  const avgFlujo   = flujos.length    ? flujos.reduce((a,b)=>a+b,0)/flujos.length        : 0;
+  const avgCap     = caps.length      ? caps.reduce((a,b)=>a+b,0)/caps.length            : 0;
+  const totalMonto = montos.reduce((a,b)=>a+b,0);
+  const totalVenc  = vencidos.reduce((a,b)=>a+b,0);
+  const conVenc    = vencidos.filter(x=>x>0).length;
+
+  const flujoColor = avgFlujo >= 1000 ? 'green' : avgFlujo >= 500 ? 'orange' : 'red';
+  const vencClass  = totalVenc > 0 ? 'red' : 'green';
+
+  document.getElementById('badge-pago').textContent = `${fmt(avgFlujo)}/sem`;
+  document.getElementById('pago-content').innerHTML = `
+    <div class="cp-row"><span class="cp-label">Ingreso promedio por integrante</span><span class="cp-value">${fmt(Math.round(avgIngreso))}/sem</span></div>
+    <div class="cp-row"><span class="cp-label">Flujo neto promedio</span><span class="cp-value ${flujoColor}">${fmt(Math.round(avgFlujo))}/sem</span></div>
+    <div class="cp-row"><span class="cp-label">Ingreso total del grupo</span><span class="cp-value">${fmt(Math.round(avgIngreso * n))}/sem</span></div>
+    <div class="cp-row"><span class="cp-label">Capacidad de pago declarada prom.</span><span class="cp-value green">${fmt(Math.round(avgCap))}/sem</span></div>
+    <div class="cp-row"><span class="cp-label">Integrantes con experiencia crediticia</span><span class="cp-value orange">${conExp} de ${n}</span></div>
+    <div class="cp-row"><span class="cp-label">Monto total solicitado</span><span class="cp-value">${fmt(totalMonto)}</span></div>
+    <div class="cp-row"><span class="cp-label">Saldo vencido total en grupo</span><span class="cp-value ${vencClass}">${fmt(totalVenc)}</span></div>
+    <div class="cp-row"><span class="cp-label">Integrantes con saldo vencido</span><span class="cp-value ${conVenc > 0 ? 'red' : 'green'}">${conVenc} de ${n}</span></div>
+  `;
+}
+
+// ─────────────────────────────────────────────────────────
+// DETALLE POR INTEGRANTE
+// ─────────────────────────────────────────────────────────
+function renderDetalle(rows) {
+  // Ordenar: D primero, luego C, B, A
+  const orden = { D:0, C:1, B:2, A:3 };
+  const sorted = [...rows].sort((a,b) => {
+    const ga = v(a,'cdc_grado_final').trim().toUpperCase();
+    const gb = v(b,'cdc_grado_final').trim().toUpperCase();
+    return (orden[ga]||9) - (orden[gb]||9);
+  });
+
+  // Contar por grado
+  const gc = { A:0, B:0, C:0, D:0 };
+  rows.forEach(r => { const g = v(r,'cdc_grado_final').trim().toUpperCase(); if(gc[g]!==undefined) gc[g]++; });
+
+  let tabs = `<div class="filter-tabs">
+    <button class="filter-tab active" onclick="filterBy('todos',this)">Total · ${rows.length}</button>`;
+  ['A','B','C','D'].forEach(g => { if(gc[g]>0) tabs += `<button class="filter-tab ${g}" onclick="filterBy('${g}',this)">${g} · ${gc[g]}</button>`; });
+  tabs += `</div>`;
+
+  let cards = sorted.map((r, i) => buildIntegranteCard(r, i)).join('');
+  document.getElementById('detalle-content').innerHTML = tabs + cards;
+}
+
+function buildIntegranteCard(r, idx) {
+  const id        = 'int' + idx;
+  const gFinal    = v(r,'cdc_grado_final').trim().toUpperCase() || '—';
+  const gPre      = v(r,'cdc_grado_pre').trim().toUpperCase()   || '—';
+  const score     = num(r,'cdc_score_post') || num(r,'ipp_score');
+  const ingreso   = num(r,'ingresos');
+  const flujo     = num(r,'flujo_neto');
+  const cap       = num(r,'capacidad');
+  const saldoT    = num(r,'cdc_saldo_total');
+  const saldoV    = num(r,'cdc_saldo_vencido');
+  const atrasos   = num(r,'cdc_cuentas_atr');
+  const peorAtr   = num(r,'cdc_max_atraso');
+  const consultas = num(r,'cdc_total_consultas_12m') || 0;
+  const cuentas   = num(r,'cdc_total_cuentas');
+  const corr      = num(r,'cdc_cuentas_corr');
+  const capa      = v(r,'cdc_capa');
+  const reglas    = v(r,'cdc_reglas');
+  const excl      = v(r,'cdc_excluidas');
+  const flags     = v(r,'cdc_flags');
+  const tiene_up  = v(r,'cdc_tiene_up');
+  const ant_neg   = v(r,'ant_negocio');
+  const tipo_dom  = v(r,'tipo_domicilio');
+  const ine       = v(r,'ine_coincide');
+  const otros     = v(r,'otros_creditos');
+
+  // Tags automáticos
+  let tags = tagFromRecomend(r);
+  if (atrasos >= 3)    tags += `<span class="tag tag-orange">${atrasos} ctas atraso</span>`;
+  else if (atrasos > 0) tags += `<span class="tag tag-orange">${atrasos} cta atraso</span>`;
+  if (saldoV > 10000)  tags += `<span class="tag tag-orange">${fmt(saldoV)} vencido</span>`;
+  if (consultas >= 6)  tags += `<span class="tag tag-gray">${consultas} consultas</span>`;
+  if (ingreso > 0 && ingreso < 100) tags += `<span class="tag tag-red">Ing. atípico</span>`;
+
+  // Meta line (evitar mostrar ingresos atípicos)
+  const ingStr  = ingreso > 100 ? `Ing: ${fmt(ingreso)}/sem` : 'Ing: verificar';
+  const flujoStr = flujo !== 0 ? `Flujo: ${fmt(flujo)}` : '';
+  const capStr   = cap !== 0   ? `Cap: ${fmt(cap)}` : '';
+  const meta = [ingStr, flujoStr, capStr].filter(Boolean).join(' · ');
+
+  // Post-buró capas
+  const capaActiva = (capa || '').toUpperCase();
+  const tieneA = v(r,'cdc_tiene_fd')==='SÍ' || v(r,'cdc_tiene_sg')==='SÍ' || v(r,'cdc_tiene_im')==='SÍ';
+  const tieneB = num(r,'cdc_capa_b') > 0;
+
+  const gradoAjuste = gPre !== gFinal ? `${gPre} → ${gFinal}` : `${gFinal} (sin cambio)`;
+  const gradoColor2 = gFinal === gPre ? 'green' : 'red';
+
+  // Reglas limpias
+  const reglasLimpias = reglas.replace(/📉|📊|✅/g,'').trim() || 'Sin hallazgos negativos';
+
+  // Score detail
+  const ineColor = (ine||'').toLowerCase().includes('sí') ? 'color:var(--green-dark)' : 'color:var(--red)';
+
+  return `
+  <div class="integrante-card" data-grado="${gFinal}">
+    <div class="integrante-header">
+      <div class="integrante-left">
+        <div class="integrante-nombre">${fullName(r)}</div>
+        <div class="integrante-meta">${meta}</div>
+        <div class="integrante-tags">${tags}</div>
+      </div>
+      <div class="score-box">
+        <div class="score-num ${gradoColor(gFinal)}">${Math.round(score) || '—'}</div>
+        <div class="score-cal">CAL. ${gFinal}</div>
+      </div>
+    </div>
+    <div class="detalle-toggle" onclick="toggleDetalle('${id}')">
+      <span id="lbl-${id}">Ver detalle completo</span>
+      <span id="chev-${id}">▼</span>
+    </div>
+    <div class="detalle-expand" id="exp-${id}">
+      <div class="detalle-tabs">
+        <div class="detalle-tab active"   onclick="switchTab('${id}','postburo',this)">POST-BURÓ</div>
+        <div class="detalle-tab"          onclick="switchTab('${id}','score',this)">SCORE</div>
+        <div class="detalle-tab"          onclick="switchTab('${id}','cdc',this)">CUENTAS CDC</div>
+      </div>
+
+      <!-- POST-BURÓ -->
+      <div class="detalle-panel active" id="${id}-postburo">
+        <div class="capa-row">
+          <div class="capa-dot ${tieneA ? 'dot-red':'dot-green'}"></div>
+          <div>
+            <div class="capa-label">CAPA A · RECHAZO ABSOLUTO</div>
+            <div class="capa-val ${tieneA ? 'red':'green'}">${tieneA ? 'Activada':'No activada'}</div>
+          </div>
+        </div>
+        <div class="capa-row">
+          <div class="capa-dot ${tieneB ? 'dot-red':'dot-green'}"></div>
+          <div>
+            <div class="capa-label">CAPA B · VENTANA 12 MESES</div>
+            <div class="capa-val ${tieneB ? 'red':'green'}">${tieneB ? 'Activada':'No activada'}</div>
+          </div>
+        </div>
+        <div class="capa-row">
+          <div class="capa-dot ${capaActiva==='C' ? 'dot-red':'dot-green'}"></div>
+          <div>
+            <div class="capa-label">CAPA C · DEGRADACIÓN</div>
+            <div class="capa-val ${capaActiva==='C' ? 'red':'green'}">
+              ${capaActiva === 'C' ? reglasLimpias.split('|')[0].trim() : 'No activada'}
+            </div>
+          </div>
+        </div>
+        <div class="capa-row">
+          <div class="capa-dot dot-orange"></div>
+          <div>
+            <div class="capa-label">GRADO AJUSTADO</div>
+            <div class="capa-val ${gradoColor2}">${gradoAjuste}</div>
+          </div>
+        </div>
+        <div class="consultas-box">
+          <span class="consultas-label">Consultas al historial (12m)</span>
+          <span class="consultas-val ${consultas >= 6 ? 'high':'ok'}">${consultas}</span>
+        </div>
+      </div>
+
+      <!-- SCORE -->
+      <div class="detalle-panel" id="${id}-score">
+        <div class="score-detail-row"><span class="score-detail-label">Score IPP (pre-buró)</span><span class="score-detail-val">${num(r,'ipp_score') || '—'} / 100</span></div>
+        <div class="score-detail-row"><span class="score-detail-label">Grado pre-buró</span><span class="score-detail-val">${gPre}</span></div>
+        <div class="score-detail-row"><span class="score-detail-label">Score post-buró</span><span class="score-detail-val">${Math.round(score) || '—'}</span></div>
+        <div class="score-detail-row"><span class="score-detail-label">Grado final CDC</span><span class="score-detail-val ${gradoColor(gFinal)}">${gFinal}</span></div>
+        <div class="score-detail-row"><span class="score-detail-label">Antigüedad negocio</span><span class="score-detail-val">${ant_neg || '—'}</span></div>
+        <div class="score-detail-row"><span class="score-detail-label">Tipo domicilio</span><span class="score-detail-val">${tipo_dom || '—'}</span></div>
+        <div class="score-detail-row"><span class="score-detail-label">Coincidencia INE</span><span class="score-detail-val" style="${ineColor}">${ine || '—'}</span></div>
+        ${otros ? `<div class="score-detail-row"><span class="score-detail-label">Otros créditos</span><span class="score-detail-val">${otros}</span></div>` : ''}
+      </div>
+
+      <!-- CUENTAS CDC -->
+      <div class="detalle-panel" id="${id}-cdc">
+        <div style="font-size:11px;font-weight:600;color:var(--text3);letter-spacing:0.5px;text-transform:uppercase;margin-bottom:8px">Historial de Crédito (CDC)</div>
+        <div class="cdc-cuenta">
+          <div class="cdc-cuenta-nombre">Saldo total / Saldo vencido</div>
+          <div class="cdc-cuenta-info">${fmt(saldoT)} total · ${fmt(saldoV)} vencido</div>
+          ${saldoV > 0
+            ? `<div class="cdc-cuenta-status status-atraso">⚠ ${atrasos} cta(s) con atraso · Peor: ${peorAtr} días</div>`
+            : `<div class="cdc-cuenta-status status-ok">✓ Sin saldo vencido</div>`}
+        </div>
+        <div class="cdc-cuenta">
+          <div class="cdc-cuenta-nombre">Cuentas</div>
+          <div class="cdc-cuenta-info">${cuentas} total · ${corr} corriente · ${atrasos} atraso</div>
+        </div>
+        ${flags ? `<div class="cdc-cuenta">
+          <div class="cdc-cuenta-nombre">Banderas de prevención</div>
+          <div class="cdc-cuenta-info">${flags}</div>
+        </div>` : ''}
+        ${excl ? `<div class="cdc-cuenta">
+          <div class="cdc-cuenta-nombre">Cuentas excluidas</div>
+          <div class="cdc-cuenta-info">${excl}</div>
+        </div>` : ''}
+      </div>
+
+    </div>
+  </div>`;
+}
+
+// ─────────────────────────────────────────────────────────
+// UI HELPERS
+// ─────────────────────────────────────────────────────────
+function toggleSection(id) {
+  const body = document.getElementById('body-' + id);
+  const chev = document.getElementById('chevron-' + id);
+  const open = body.classList.toggle('open');
+  chev.classList.toggle('open', open);
+}
+
+function toggleDetalle(id) {
+  const exp  = document.getElementById('exp-' + id);
+  const lbl  = document.getElementById('lbl-' + id);
+  const chev = document.getElementById('chev-' + id);
+  const open = exp.classList.toggle('open');
+  lbl.textContent  = open ? 'Ocultar detalle' : 'Ver detalle completo';
+  chev.textContent = open ? '▲' : '▼';
+}
+
+function switchTab(intId, tab, el) {
+  const exp = document.getElementById('exp-' + intId);
+  exp.querySelectorAll('.detalle-tab').forEach(t => t.classList.remove('active'));
+  exp.querySelectorAll('.detalle-panel').forEach(p => p.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById(intId + '-' + tab).classList.add('active');
+}
+
+function filterBy(grado, btn) {
+  document.querySelectorAll('.filter-tab').forEach(t => t.classList.remove('active'));
+  btn.classList.add('active');
+  document.querySelectorAll('.integrante-card').forEach(card => {
+    card.style.display = (grado === 'todos' || card.dataset.grado === grado) ? '' : 'none';
+  });
+}
+
+function toTitleCase(str) {
+  return str.toLowerCase().replace(/\b\w/g, c => c.toUpperCase());
+}
+</script>
+</body>
+</html>
