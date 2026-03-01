@@ -1,0 +1,1329 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Visita Única</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=DM+Mono:wght@400;500&display=swap');
+
+:root {
+  --bg: #F4F5F7;
+  --white: #FFFFFF;
+  --border: #E4E7EC;
+  --border2: #D0D5DD;
+  --text: #101828;
+  --text2: #475467;
+  --text3: #98A2B3;
+  --green: #2D7A3E;
+  --green-light: #ECFDF3;
+  --green-mid: #12B76A;
+  --amber: #B54708;
+  --amber-bg: #FFFAEB;
+  --amber-border: #FEC84B;
+  --red: #B42318;
+  --red-bg: #FEF3F2;
+  --red-border: #FDA29B;
+  --r: 12px;
+  --r-sm: 8px;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+body {
+  font-family: 'DM Sans', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  font-size: 15px;
+  line-height: 1.4;
+}
+
+/* ── LAYOUT ── */
+.sheet {
+  max-width: 480px;
+  margin: 0 auto;
+  background: var(--white);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+}
+
+/* ── TOP BAR ── */
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px 12px;
+  border-bottom: 1px solid var(--border);
+  position: sticky;
+  top: 0;
+  background: var(--white);
+  z-index: 50;
+}
+.topbar-title {
+  font-size: 16px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.topbar-close {
+  width: 32px; height: 32px;
+  border-radius: 50%;
+  border: none;
+  background: var(--bg);
+  color: var(--text2);
+  font-size: 16px;
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  transition: background .15s;
+}
+.topbar-close:hover { background: var(--border); }
+
+/* ── PROGRESS BAR ── */
+.progress-bar {
+  height: 3px;
+  background: var(--border);
+  position: relative;
+}
+.progress-fill {
+  height: 100%;
+  background: var(--green);
+  transition: width .4s ease;
+  border-radius: 2px;
+}
+
+/* ── STEP HEADER ── */
+.step-header {
+  padding: 16px 20px 4px;
+}
+.step-meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 6px;
+}
+.step-counter { font-size: 13px; color: var(--text3); font-weight: 500; }
+.step-time    { font-size: 13px; color: var(--text3); }
+.step-tag {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--green);
+  margin-bottom: 4px;
+}
+.step-title {
+  font-size: 22px;
+  font-weight: 800;
+  color: var(--text);
+  line-height: 1.15;
+  margin-bottom: 4px;
+}
+.step-legend {
+  font-size: 13px;
+  color: var(--text3);
+  font-style: italic;
+}
+
+/* ── INTEGRANTES STRIP ── */
+.integrantes-strip {
+  margin: 14px 20px 0;
+  background: var(--bg);
+  border-radius: var(--r-sm);
+  padding: 10px 14px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.integrantes-names {
+  font-size: 13px;
+  color: var(--text2);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  flex: 1;
+}
+.integrantes-names span { font-size: 16px; }
+.editar-btn {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text2);
+  background: var(--white);
+  border: 1px solid var(--border2);
+  border-radius: 20px;
+  padding: 5px 14px;
+  cursor: pointer;
+  white-space: nowrap;
+  flex-shrink: 0;
+  transition: all .15s;
+}
+.editar-btn:hover { background: var(--bg); }
+
+/* ── PREGUNTAS ── */
+.preguntas-list {
+  padding: 14px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  flex: 1;
+}
+
+.pregunta-card {
+  background: var(--white);
+  border: 1.5px solid var(--border);
+  border-radius: var(--r);
+  padding: 16px;
+  transition: border-color .15s;
+}
+.pregunta-card.answered { border-color: #B5E2C4; }
+
+.pregunta-num {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--green);
+  margin-bottom: 6px;
+  font-family: 'DM Mono', monospace;
+}
+.pregunta-text {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text);
+  margin-bottom: 14px;
+  line-height: 1.35;
+}
+
+/* ── OPTIONS ── */
+.options-row {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.opt-btn {
+  padding: 8px 16px;
+  border-radius: 20px;
+  border: 1.5px solid var(--border2);
+  background: var(--white);
+  font-family: 'DM Sans', sans-serif;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text2);
+  cursor: pointer;
+  transition: all .15s;
+  white-space: nowrap;
+}
+.opt-btn:hover { border-color: var(--green); color: var(--green); }
+
+.opt-btn.sel-si {
+  background: var(--green-light);
+  border-color: var(--green-mid);
+  color: var(--green);
+  font-weight: 700;
+}
+.opt-btn.sel-parcial {
+  background: var(--amber-bg);
+  border-color: var(--amber-border);
+  color: var(--amber);
+  font-weight: 700;
+}
+.opt-btn.sel-no {
+  background: var(--red-bg);
+  border-color: var(--red-border);
+  color: var(--red);
+  font-weight: 700;
+}
+.opt-btn.sel-noapl {
+  background: #F8F9FA;
+  border-color: var(--text3);
+  color: var(--text3);
+  font-weight: 700;
+}
+
+/* ── PARCIAL INLINE ── */
+.parcial-inline {
+  margin-top: 12px;
+  background: var(--bg);
+  border-radius: var(--r-sm);
+  padding: 12px 14px;
+  display: none;
+}
+.parcial-inline.show { display: block; }
+.parcial-label {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--text3);
+  margin-bottom: 10px;
+}
+.parcial-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+.chip {
+  padding: 6px 14px;
+  border-radius: 20px;
+  border: 1.5px solid var(--border2);
+  background: var(--white);
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text2);
+  cursor: pointer;
+  transition: all .15s;
+}
+.chip.sel {
+  background: var(--amber-bg);
+  border-color: var(--amber-border);
+  color: var(--amber);
+  font-weight: 700;
+}
+.parcial-comment {
+  width: 100%;
+  border: 1.5px solid var(--border);
+  border-radius: var(--r-sm);
+  padding: 10px 12px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 13px;
+  color: var(--text);
+  background: var(--white);
+  resize: none;
+  outline: none;
+  min-height: 64px;
+  transition: border-color .15s;
+}
+.parcial-comment:focus { border-color: var(--green); }
+.parcial-comment::placeholder { color: var(--text3); }
+
+/* ── BOTTOM NAV ── */
+.bottom-nav {
+  position: sticky;
+  bottom: 0;
+  background: var(--white);
+  border-top: 1px solid var(--border);
+  padding: 14px 20px;
+  display: flex;
+  gap: 10px;
+}
+.nav-back {
+  padding: 13px 20px;
+  border-radius: var(--r-sm);
+  border: 1.5px solid var(--border2);
+  background: var(--white);
+  font-family: 'DM Sans', sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text2);
+  cursor: pointer;
+  transition: all .15s;
+  white-space: nowrap;
+}
+.nav-back:hover { background: var(--bg); }
+.nav-next {
+  flex: 1;
+  padding: 14px;
+  border-radius: var(--r-sm);
+  border: none;
+  background: var(--green);
+  color: #fff;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background .15s;
+}
+.nav-next:hover { background: #235E30; }
+.nav-next:disabled { background: var(--border2); cursor: not-allowed; }
+
+/* ── MODAL EDITAR ── */
+.modal-overlay {
+  position: fixed; inset: 0;
+  background: rgba(16,24,40,0.5);
+  z-index: 100;
+  display: none;
+  align-items: flex-end;
+  justify-content: center;
+}
+.modal-overlay.show { display: flex; }
+.modal-sheet {
+  background: var(--white);
+  border-radius: 20px 20px 0 0;
+  width: 100%;
+  max-width: 480px;
+  padding: 20px 20px 32px;
+  animation: slideUp .25s ease;
+}
+@keyframes slideUp { from { transform: translateY(60px); opacity:0; } to { transform: translateY(0); opacity:1; } }
+.modal-handle { width: 40px; height: 4px; background: var(--border); border-radius: 2px; margin: 0 auto 16px; }
+.modal-title { font-size: 17px; font-weight: 700; margin-bottom: 6px; }
+.modal-sub   { font-size: 13px; color: var(--text3); margin-bottom: 16px; }
+.modal-chips { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 20px; }
+.modal-chip {
+  padding: 8px 16px; border-radius: 20px;
+  border: 1.5px solid var(--border2);
+  background: var(--white);
+  font-size: 14px; font-weight: 500; color: var(--text2);
+  cursor: pointer; transition: all .15s;
+  display: flex; align-items: center; gap: 6px;
+}
+.modal-chip.removed {
+  background: var(--red-bg);
+  border-color: var(--red-border);
+  color: var(--red);
+  text-decoration: line-through;
+}
+.modal-save {
+  width: 100%; padding: 14px;
+  background: var(--green); color: #fff;
+  border: none; border-radius: var(--r-sm);
+  font-family: 'DM Sans', sans-serif;
+  font-size: 15px; font-weight: 700;
+  cursor: pointer;
+}
+
+/* ── PANTALLA FINAL ── */
+.final-screen { display: none; flex-direction: column; flex:1; }
+.final-screen.show { display: flex; }
+
+.nivel-card {
+  margin: 16px 20px 0;
+  border-radius: var(--r);
+  border: 1.5px solid var(--border);
+  padding: 16px;
+}
+.nivel-top {
+  display: flex; justify-content: space-between; align-items: flex-start;
+  margin-bottom: 8px;
+}
+.nivel-label { font-size: 10px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; color: var(--text3); }
+.nivel-score { font-size: 13px; font-weight: 700; color: var(--text2); font-family: 'DM Mono', monospace; }
+.nivel-estado { font-size: 20px; font-weight: 800; margin-bottom: 4px; }
+.nivel-desc   { font-size: 13px; color: var(--text2); }
+
+.stats-row {
+  display: grid; grid-template-columns: 1fr 1fr 1fr;
+  gap: 10px; margin: 12px 20px 0;
+}
+.stat-box {
+  border-radius: var(--r-sm);
+  padding: 14px 10px;
+  text-align: center;
+}
+.stat-box.green { background: var(--green-light); border: 1px solid #B5E2C4; }
+.stat-box.amber { background: var(--amber-bg);   border: 1px solid var(--amber-border); }
+.stat-box.red   { background: var(--red-bg);     border: 1px solid var(--red-border); }
+.stat-num  { font-size: 28px; font-weight: 800; line-height: 1; margin-bottom: 4px; }
+.stat-num.green { color: var(--green); }
+.stat-num.amber { color: var(--amber); }
+.stat-num.red   { color: var(--red); }
+.stat-label { font-size: 12px; color: var(--text2); font-weight: 500; }
+
+.dim-card {
+  margin: 12px 20px 0;
+  border-radius: var(--r);
+  border: 1.5px solid var(--border);
+  padding: 14px 16px;
+}
+.dim-title { font-size: 10px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; color: var(--text3); margin-bottom: 10px; }
+.dim-item  { display: flex; align-items: center; gap: 10px; padding: 5px 0; font-size: 14px; font-weight: 500; color: var(--text); }
+
+.integ-section-title {
+  font-size: 10px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase;
+  color: var(--text3); margin: 16px 20px 8px;
+}
+
+.integ-result {
+  margin: 0 20px 8px;
+  border-radius: var(--r);
+  border: 1.5px solid var(--border);
+  overflow: hidden;
+}
+.integ-result.alerta { border-left: 4px solid var(--amber-border); }
+.integ-result.critica { border-left: 4px solid var(--red-border); }
+.integ-result.ok { border-left: 4px solid var(--green-mid); }
+
+.integ-result-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 12px 14px; cursor: pointer;
+}
+.integ-result-left { display: flex; align-items: center; gap: 10px; }
+.integ-result-name { font-size: 14px; font-weight: 700; }
+.integ-result-status { font-size: 12px; color: var(--text3); margin-top: 1px; }
+.integ-result-detail { padding: 0 14px 10px; display: none; }
+.integ-result-detail.show { display: block; }
+.integ-alert-tag {
+  display: inline-block; font-size: 11px; font-weight: 600;
+  padding: 3px 10px; border-radius: 20px; margin-bottom: 8px;
+}
+.alert-tag-amber { background: var(--amber-bg); color: var(--amber); }
+.alert-tag-red   { background: var(--red-bg);   color: var(--red); }
+.integ-q-detail  { font-size: 12px; color: var(--text2); padding: 4px 0; border-bottom: 1px solid var(--bg); }
+.integ-q-detail:last-child { border-bottom: none; }
+
+.veredicto-card {
+  margin: 12px 20px 0;
+  border-radius: var(--r);
+  border: 1.5px solid var(--border);
+  padding: 16px;
+}
+.veredicto-label { font-size: 10px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; color: var(--text3); margin-bottom: 12px; }
+.veredicto-btns  { display: flex; gap: 10px; }
+.verd-btn {
+  padding: 10px 20px; border-radius: 20px;
+  border: 1.5px solid var(--border2);
+  background: var(--white);
+  font-family: 'DM Sans', sans-serif;
+  font-size: 14px; font-weight: 600; color: var(--text2);
+  cursor: pointer; transition: all .15s; display: flex; align-items: center; gap: 6px;
+}
+.verd-btn.sel-aprobar { background: var(--green-light); border-color: var(--green-mid); color: var(--green); }
+.verd-btn.sel-noaprobar { background: var(--red-bg); border-color: var(--red-border); color: var(--red); }
+
+.notas-card {
+  margin: 12px 20px 0;
+  border-radius: var(--r);
+  border: 1.5px solid var(--border);
+  padding: 16px;
+}
+.notas-label { font-size: 10px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; color: var(--text3); margin-bottom: 4px; }
+.notas-sub   { font-size: 12px; color: var(--text3); font-style: italic; margin-bottom: 12px; }
+.nota-check  {
+  display: flex; align-items: flex-start; gap: 12px;
+  padding: 12px 14px; border-radius: var(--r-sm);
+  border: 1.5px solid var(--border);
+  margin-bottom: 8px; cursor: pointer;
+  transition: all .15s; background: var(--white);
+}
+.nota-check:last-child { margin-bottom: 0; }
+.nota-check.checked { background: var(--red-bg); border-color: var(--red-border); }
+.nota-checkbox {
+  width: 18px; height: 18px; border: 2px solid var(--border2);
+  border-radius: 4px; flex-shrink: 0; margin-top: 1px;
+  display: flex; align-items: center; justify-content: center;
+  transition: all .15s;
+}
+.nota-check.checked .nota-checkbox { background: var(--red); border-color: var(--red); }
+.nota-check-title { font-size: 14px; font-weight: 600; }
+.nota-check-sub   { font-size: 12px; color: var(--text3); }
+
+.comentarios-card {
+  margin: 12px 20px 0;
+  border-radius: var(--r);
+  border: 1.5px solid var(--border);
+  padding: 16px;
+}
+.comentarios-label { font-size: 10px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; color: var(--text3); margin-bottom: 10px; }
+.comentarios-ta {
+  width: 100%; border: 1.5px solid var(--border); border-radius: var(--r-sm);
+  padding: 12px; font-family: 'DM Sans', sans-serif; font-size: 14px;
+  color: var(--text); background: var(--bg); resize: none; outline: none;
+  min-height: 90px; transition: border-color .15s;
+}
+.comentarios-ta:focus { border-color: var(--green); background: var(--white); }
+.comentarios-ta::placeholder { color: var(--text3); }
+
+.final-bottom {
+  position: sticky; bottom: 0; background: var(--white);
+  border-top: 1px solid var(--border);
+  padding: 14px 20px; display: flex; gap: 10px;
+  margin-top: 16px;
+}
+.final-editar {
+  padding: 13px 18px; border-radius: var(--r-sm);
+  border: 1.5px solid var(--border2); background: var(--white);
+  font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 600;
+  color: var(--text2); cursor: pointer;
+}
+.final-enviar {
+  flex: 1; padding: 14px; border-radius: var(--r-sm); border: none;
+  background: var(--green); color: #fff;
+  font-family: 'DM Sans', sans-serif; font-size: 15px; font-weight: 700;
+  cursor: pointer; transition: background .15s;
+}
+.final-enviar:hover { background: #235E30; }
+
+/* ── TOAST ── */
+.toast {
+  position: fixed; bottom: 90px; left: 50%; transform: translateX(-50%);
+  background: #1C1C1E; color: #fff; padding: 10px 18px;
+  border-radius: 20px; font-size: 13px; font-weight: 500;
+  z-index: 200; opacity: 0; transition: opacity .2s;
+  white-space: nowrap;
+}
+.toast.show { opacity: 1; }
+
+/* ── SUCCESS SCREEN ── */
+.success-screen {
+  display: none; flex-direction: column; align-items: center;
+  justify-content: center; flex: 1; padding: 40px 30px; text-align: center;
+}
+.success-screen.show { display: flex; }
+.success-icon { font-size: 64px; margin-bottom: 20px; }
+.success-title { font-size: 24px; font-weight: 800; margin-bottom: 8px; }
+.success-sub { font-size: 15px; color: var(--text2); max-width: 280px; margin: 0 auto 28px; }
+.success-group { font-size: 13px; font-weight: 700; color: var(--green); letter-spacing: .5px; text-transform: uppercase; margin-bottom: 6px; }
+.success-back {
+  padding: 14px 28px; border-radius: var(--r-sm); border: none;
+  background: var(--green); color: #fff;
+  font-family: 'DM Sans', sans-serif; font-size: 15px; font-weight: 700;
+  cursor: pointer;
+}
+</style>
+</head>
+<body>
+
+<div class="sheet" id="app">
+
+  <!-- TOP BAR -->
+  <div class="topbar">
+    <div class="topbar-title">📋 Preguntas para sesión</div>
+    <button class="topbar-close" onclick="confirmClose()">✕</button>
+  </div>
+
+  <!-- PROGRESS -->
+  <div class="progress-bar">
+    <div class="progress-fill" id="progress-fill" style="width:20%"></div>
+  </div>
+
+  <!-- BLOQUES 1–4 -->
+  <div id="bloques-container" style="display:flex; flex-direction:column; flex:1; overflow-y:auto;">
+  </div>
+
+  <!-- PANTALLA FINAL -->
+  <div class="final-screen" id="final-screen">
+    <!-- contenido generado dinámicamente -->
+  </div>
+
+  <!-- SUCCESS -->
+  <div class="success-screen" id="success-screen">
+    <div class="success-icon">✅</div>
+    <div class="success-group" id="success-grupo"></div>
+    <div class="success-title">Visita Única completada</div>
+    <div class="success-sub">La evaluación fue registrada y enviada al equipo CS correctamente.</div>
+    <button class="success-back" onclick="window.location.href='index.html'">Volver al inicio</button>
+  </div>
+
+</div>
+
+<!-- MODAL EDITAR INTEGRANTES -->
+<div class="modal-overlay" id="modal-editar">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-title">Editar asistentes</div>
+    <div class="modal-sub">Desactiva a quien no estuvo presente. Solo afecta esta sesión.</div>
+    <div class="modal-chips" id="modal-chips"></div>
+    <button class="modal-save" onclick="saveEditar()">Confirmar asistentes</button>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<script>
+// ─────────────────────────────────────────────────────────
+// CONFIG & GOOGLE SHEETS
+// ─────────────────────────────────────────────────────────
+const SHEET_ID  = '1kC89wVcE-6G96Y6WCEDjElAdLWbKwL_SaqHQDR8I7iY';
+const SHEET_GID = '1077826375';
+// Pestaña donde van las respuestas de la visita única
+// (crear una hoja llamada "Visita_Unica" en el mismo Sheet)
+const RESP_GID  = 'Visita_Unica';
+
+// ─────────────────────────────────────────────────────────
+// PREGUNTAS
+// ─────────────────────────────────────────────────────────
+const BLOQUES = [
+  {
+    id: 1,
+    tag: '',
+    titulo: 'Evaluación inicial del grupo',
+    tiempo: '~2 min',
+    paso: 'Paso 1 de 5',
+    preguntas: [
+      { id: 'V1', texto: '¿Llegaron todas y se mantuvieron durante la sesión?', opciones: ['si','parcial','no'] },
+      { id: 'V2', texto: '¿El grupo respondió sin ayuda de alguien ajeno?',      opciones: ['si','parcial','no'] },
+      { id: 'V3', texto: '¿Cada integrante respondió por sí misma?',             opciones: ['si','parcial','no'] },
+    ]
+  },
+  {
+    id: 2,
+    tag: 'UBICABILIDAD',
+    titulo: 'Ubicabilidad de integrantes',
+    tiempo: '~1 min',
+    paso: 'Paso 2 de 5',
+    preguntas: [
+      { id: 'V4', texto: '¿Pudieron describir dónde vive cada una?',    opciones: ['si','parcial','no'] },
+      { id: 'V5', texto: '¿Pudieron describir el negocio de cada una?', opciones: ['si','parcial','no'] },
+    ]
+  },
+  {
+    id: 3,
+    tag: 'VERIFICACIÓN',
+    titulo: 'Identidad, negocio y buró',
+    tiempo: '~3 min',
+    paso: 'Paso 3 de 5',
+    preguntas: [
+      { id: 'V6', texto: '¿Identidad verificada (INE vs rostro) para todas?',                opciones: ['si','parcial','no'] },
+      { id: 'V7', texto: '¿Negocio consistente (lo que dicen vs lo observado) para todas?',  opciones: ['si','parcial','no'] },
+      { id: 'V8', texto: '¿Reconocen deudas y saben cuánto pagan y a quién?',                opciones: ['si','parcial','no','noapl'] },
+    ]
+  },
+  {
+    id: 4,
+    tag: 'PRODUCTO',
+    titulo: 'Comprensión del producto',
+    tiempo: '~2 min',
+    paso: 'Paso 4 de 5',
+    preguntas: [
+      { id: 'V9',  texto: '¿Quedó claro para todas qué es un crédito solidario?',     opciones: ['si','parcial','no'] },
+      { id: 'V10', texto: '¿Aceptan que si una falla, las demás responden?',           opciones: ['si','parcial','no'] },
+    ]
+  }
+];
+
+const OPT_LABEL = { si: 'Sí — todas', parcial: 'Parcial', no: 'No — nadie', noapl: 'No aplica' };
+const OPT_CLS   = { si: 'sel-si', parcial: 'sel-parcial', no: 'sel-no', noapl: 'sel-noapl' };
+
+// ─────────────────────────────────────────────────────────
+// STATE
+// ─────────────────────────────────────────────────────────
+let grupoNombre   = '';
+let integrantesAll = [];   // todos los del grupo
+let integrantesSession = []; // los que asistieron (editables)
+let respuestas    = {};    // { V1: { valor:'parcial', afectadas:['Nombre'], comentario:'' }, ... }
+let bloqueActual  = 0;     // 0..3 = bloques, 4 = final
+let veredicto     = null;
+let notas         = { urgencia: false, interaccion: false };
+let comentarios   = '';
+let modalContext  = null;  // qué bloque abrió el modal
+
+// ─────────────────────────────────────────────────────────
+// INIT: leer grupo desde URL params
+// ─────────────────────────────────────────────────────────
+function init() {
+  const params = new URLSearchParams(window.location.search);
+  grupoNombre = params.get('grupo') || '';
+
+  if (!grupoNombre) {
+    // fallback: intentar leer de sessionStorage (si viene del instrumento anterior)
+    grupoNombre = sessionStorage.getItem('grupoActivo') || '';
+  }
+
+  if (!grupoNombre) {
+    // Si no hay grupo, pedir que regresen
+    document.getElementById('bloques-container').innerHTML = `
+      <div style="padding:40px 24px; text-align:center; color:#475467;">
+        <div style="font-size:48px;margin-bottom:16px;">⚠️</div>
+        <div style="font-size:18px;font-weight:700;margin-bottom:8px;">Sin grupo seleccionado</div>
+        <div style="font-size:14px;margin-bottom:24px;">Regresa al instrumento grupal y usa el botón "Avanzar a la Visita Única".</div>
+        <button onclick="window.location.href='index.html'" style="padding:12px 24px;background:#2D7A3E;color:#fff;border:none;border-radius:8px;font-size:15px;font-weight:700;cursor:pointer;">Ir al instrumento grupal</button>
+      </div>`;
+    return;
+  }
+
+  cargarIntegrantes();
+}
+
+// ─────────────────────────────────────────────────────────
+// CARGAR integrantes desde el Sheet
+// ─────────────────────────────────────────────────────────
+function cargarIntegrantes() {
+  document.getElementById('bloques-container').innerHTML = `
+    <div style="padding:60px 24px;text-align:center;color:#98A2B3;font-size:14px;">
+      Cargando grupo…
+    </div>`;
+
+  if (!window.google) window.google = {};
+  if (!window.google.visualization) window.google.visualization = {};
+  if (!window.google.visualization.Query) window.google.visualization.Query = {};
+
+  window.google.visualization.Query.setResponse = function(data) {
+    clearTimeout(loadTimer);
+    const s = document.getElementById('_gs_load');
+    if (s) s.remove();
+
+    if (data.status === 'error') {
+      usarDatosDemoSiError();
+      return;
+    }
+
+    const headers = data.table.cols.map(c => (c.label || c.id || '').trim().toLowerCase());
+    const colNombre   = headers.indexOf('nombre');
+    const colAP       = headers.indexOf('apellido_paterno');
+    const colGrupo    = headers.indexOf('nombre del grupo final');
+
+    const target = grupoNombre.trim().toUpperCase();
+    integrantesAll = [];
+
+    data.table.rows.forEach(row => {
+      const g = (row.c[colGrupo]?.v || '').toString().trim().toUpperCase();
+      if (g === target) {
+        const nombre = (row.c[colNombre]?.v || '').toString().trim();
+        const ap     = (row.c[colAP]?.v     || '').toString().trim();
+        const full   = [nombre, ap].filter(Boolean).join(' ');
+        if (full) integrantesAll.push(full);
+      }
+    });
+
+    if (integrantesAll.length === 0) {
+      usarDatosDemoSiError();
+      return;
+    }
+
+    integrantesSession = [...integrantesAll];
+    renderBloque(0);
+  };
+
+  const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json&gid=${SHEET_GID}`;
+  const script = document.createElement('script');
+  script.id  = '_gs_load';
+  script.src = url;
+  script.onerror = () => usarDatosDemoSiError();
+  document.head.appendChild(script);
+
+  const loadTimer = setTimeout(() => usarDatosDemoSiError(), 10000);
+}
+
+function usarDatosDemoSiError() {
+  // Si falla la conexión, usar integrantes del grupo conocido o demo
+  integrantesAll = grupoNombre
+    ? [grupoNombre + ' (sin datos CDC)']
+    : ['Integrante 1', 'Integrante 2', 'Integrante 3'];
+  integrantesSession = [...integrantesAll];
+  renderBloque(0);
+}
+
+// ─────────────────────────────────────────────────────────
+// SHORT NAME helper
+// ─────────────────────────────────────────────────────────
+function shortName(full) {
+  const parts = full.trim().split(' ');
+  if (parts.length === 1) return parts[0];
+  return parts[0] + ' ' + parts[1][0] + '.';
+}
+
+function integrantesLine(list) {
+  return list.map(shortName).join(' · ');
+}
+
+// ─────────────────────────────────────────────────────────
+// RENDER BLOQUE
+// ─────────────────────────────────────────────────────────
+function renderBloque(idx) {
+  bloqueActual = idx;
+  const b = BLOQUES[idx];
+  const progress = ((idx + 1) / 5) * 100;
+  document.getElementById('progress-fill').style.width = progress + '%';
+
+  document.getElementById('final-screen').classList.remove('show');
+  document.getElementById('success-screen').classList.remove('show');
+  const cont = document.getElementById('bloques-container');
+  cont.style.display = 'flex';
+
+  let html = '';
+
+  // Step header
+  html += `<div class="step-header">
+    <div class="step-meta">
+      <span class="step-counter">${b.paso}</span>
+      <span class="step-time">${b.tiempo}</span>
+    </div>
+    ${b.tag ? `<div class="step-tag">${b.tag}</div>` : ''}
+    <div class="step-title">${b.titulo}</div>
+    <div class="step-legend">Sí = todas · Parcial = algunas · No = nadie</div>
+  </div>`;
+
+  // Integrantes strip
+  html += `<div class="integrantes-strip">
+    <div class="integrantes-names">
+      <span>👥</span>${integrantesLine(integrantesSession)}
+    </div>
+    <button class="editar-btn" onclick="abrirEditar(${idx})">Editar</button>
+  </div>`;
+
+  // Preguntas
+  html += `<div class="preguntas-list">`;
+
+  b.preguntas.forEach((p, pi) => {
+    const resp = respuestas[p.id] || {};
+    const sel  = resp.valor || null;
+    const answered = sel ? 'answered' : '';
+    const num  = BLOQUES.slice(0, idx).reduce((acc, bl) => acc + bl.preguntas.length, 0) + pi + 1;
+
+    html += `<div class="pregunta-card ${answered}" id="card-${p.id}">
+      <div class="pregunta-num">${num}.  ${p.id}</div>
+      <div class="pregunta-text">${p.texto}</div>
+      <div class="options-row">`;
+
+    p.opciones.forEach(o => {
+      const cls = sel === o ? OPT_CLS[o] : '';
+      html += `<button class="opt-btn ${cls}" id="opt-${p.id}-${o}" onclick="selectOpt('${p.id}','${o}',${idx})">${OPT_LABEL[o]}</button>`;
+    });
+
+    html += `</div>`;
+
+    // Parcial inline
+    if (sel === 'parcial') {
+      const afectadas = resp.afectadas || [];
+      const comentario = resp.comentario || '';
+      html += `<div class="parcial-inline show" id="parcial-${p.id}">
+        <div class="parcial-label">Integrantes que faltaron o se fueron:</div>
+        <div class="parcial-chips">`;
+      integrantesSession.forEach(name => {
+        const s = afectadas.includes(name) ? 'sel' : '';
+        html += `<span class="chip ${s}" onclick="toggleChip('${p.id}','${name.replace(/'/g, "\\'")}',this)">${shortName(name)}</span>`;
+      });
+      html += `</div>
+        <textarea class="parcial-comment" placeholder="Comentario (opcional)..." id="comment-${p.id}" onchange="saveComment('${p.id}',this.value)">${comentario}</textarea>
+      </div>`;
+    } else {
+      html += `<div class="parcial-inline" id="parcial-${p.id}"></div>`;
+    }
+
+    html += `</div>`; // pregunta-card
+  });
+
+  html += `</div>`; // preguntas-list
+
+  // Bottom nav
+  html += `<div class="bottom-nav">`;
+  if (idx > 0) {
+    html += `<button class="nav-back" onclick="renderBloque(${idx-1})">← Editar</button>`;
+  }
+  html += `<button class="nav-next" id="btn-next" onclick="irSiguiente(${idx})">Siguiente →</button>`;
+  html += `</div>`;
+
+  cont.innerHTML = html;
+  cont.scrollTop = 0;
+  checkNextEnabled(idx);
+}
+
+// ─────────────────────────────────────────────────────────
+// SELECT OPCIÓN
+// ─────────────────────────────────────────────────────────
+function selectOpt(pid, valor, bloqueIdx) {
+  const b = BLOQUES[bloqueIdx];
+  const p = b.preguntas.find(q => q.id === pid);
+
+  // Guardar
+  if (!respuestas[pid]) respuestas[pid] = {};
+  respuestas[pid].valor = valor;
+
+  // Limpiar afectadas si ya no es parcial
+  if (valor !== 'parcial') {
+    respuestas[pid].afectadas  = [];
+    respuestas[pid].comentario = '';
+  }
+
+  // Actualizar botones
+  p.opciones.forEach(o => {
+    const btn = document.getElementById(`opt-${pid}-${o}`);
+    if (!btn) return;
+    btn.className = 'opt-btn' + (o === valor ? ` ${OPT_CLS[o]}` : '');
+  });
+
+  // Card answered
+  const card = document.getElementById(`card-${pid}`);
+  if (card) card.classList.toggle('answered', true);
+
+  // Parcial inline
+  const pDiv = document.getElementById(`parcial-${pid}`);
+  if (pDiv) {
+    if (valor === 'parcial') {
+      const afectadas = respuestas[pid].afectadas || [];
+      const comentario = respuestas[pid].comentario || '';
+      pDiv.className = 'parcial-inline show';
+      pDiv.innerHTML = `
+        <div class="parcial-label">Integrantes que faltaron o se fueron:</div>
+        <div class="parcial-chips">
+          ${integrantesSession.map(name =>
+            `<span class="chip ${afectadas.includes(name)?'sel':''}" onclick="toggleChip('${pid}','${name.replace(/'/g,"\\'")}',this)">${shortName(name)}</span>`
+          ).join('')}
+        </div>
+        <textarea class="parcial-comment" placeholder="Comentario (opcional)..." onchange="saveComment('${pid}',this.value)">${comentario}</textarea>`;
+    } else {
+      pDiv.className = 'parcial-inline';
+      pDiv.innerHTML = '';
+    }
+  }
+
+  checkNextEnabled(bloqueIdx);
+}
+
+function toggleChip(pid, name, el) {
+  if (!respuestas[pid]) respuestas[pid] = {};
+  if (!respuestas[pid].afectadas) respuestas[pid].afectadas = [];
+  const arr = respuestas[pid].afectadas;
+  const i = arr.indexOf(name);
+  if (i === -1) { arr.push(name); el.classList.add('sel'); }
+  else          { arr.splice(i,1); el.classList.remove('sel'); }
+}
+
+function saveComment(pid, val) {
+  if (!respuestas[pid]) respuestas[pid] = {};
+  respuestas[pid].comentario = val;
+}
+
+// ─────────────────────────────────────────────────────────
+// VALIDAR que todas las preguntas del bloque estén respondidas
+// ─────────────────────────────────────────────────────────
+function checkNextEnabled(idx) {
+  const b = BLOQUES[idx];
+  const allAnswered = b.preguntas.every(p => respuestas[p.id] && respuestas[p.id].valor);
+  const btn = document.getElementById('btn-next');
+  if (btn) btn.disabled = !allAnswered;
+}
+
+function irSiguiente(idx) {
+  const b = BLOQUES[idx];
+  // Validar una vez más
+  const allAnswered = b.preguntas.every(p => respuestas[p.id] && respuestas[p.id].valor);
+  if (!allAnswered) { showToast('Responde todas las preguntas para continuar'); return; }
+
+  if (idx < BLOQUES.length - 1) {
+    renderBloque(idx + 1);
+  } else {
+    renderFinal();
+  }
+}
+
+// ─────────────────────────────────────────────────────────
+// MODAL EDITAR
+// ─────────────────────────────────────────────────────────
+function abrirEditar(bloqueIdx) {
+  modalContext = bloqueIdx;
+  const chips = document.getElementById('modal-chips');
+  chips.innerHTML = integrantesAll.map(name => {
+    const removed = !integrantesSession.includes(name);
+    return `<div class="modal-chip ${removed?'removed':''}" onclick="toggleModalChip('${name.replace(/'/g,"\\'")}',this)">
+      ${removed ? '✕' : '✓'} ${shortName(name)}
+    </div>`;
+  }).join('');
+  document.getElementById('modal-editar').classList.add('show');
+}
+
+function toggleModalChip(name, el) {
+  const i = integrantesSession.indexOf(name);
+  if (i === -1) { integrantesSession.push(name); el.classList.remove('removed'); el.innerHTML = `✓ ${shortName(name)}`; }
+  else          { integrantesSession.splice(i,1); el.classList.add('removed');    el.innerHTML = `✕ ${shortName(name)}`; }
+}
+
+function saveEditar() {
+  document.getElementById('modal-editar').classList.remove('show');
+  renderBloque(modalContext);
+}
+
+// cerrar modal al tocar overlay
+document.getElementById('modal-editar').addEventListener('click', function(e) {
+  if (e.target === this) this.classList.remove('show');
+});
+
+// ─────────────────────────────────────────────────────────
+// PANTALLA FINAL
+// ─────────────────────────────────────────────────────────
+function renderFinal() {
+  bloqueActual = 4;
+  document.getElementById('progress-fill').style.width = '100%';
+  document.getElementById('bloques-container').style.display = 'none';
+
+  const fs = document.getElementById('final-screen');
+  fs.classList.add('show');
+  fs.innerHTML = buildFinalHTML();
+  fs.scrollTop = 0;
+
+  // Sync veredicto y notas con estado guardado
+  if (veredicto) {
+    document.getElementById('verd-aprobar') && document.getElementById('verd-aprobar').classList.toggle('sel-aprobar', veredicto === 'aprobar');
+    document.getElementById('verd-noaprobar') && document.getElementById('verd-noaprobar').classList.toggle('sel-noaprobar', veredicto === 'noaprobar');
+  }
+}
+
+function buildFinalHTML() {
+  // Calcular score y estados por integrante
+  const allPregs = BLOQUES.flatMap(b => b.preguntas);
+  const totalPregs = allPregs.length;
+
+  // Score: si = 10pts, parcial = 5pts, no = 0, noapl = skip
+  let totalPts = 0, maxPts = 0;
+  allPregs.forEach(p => {
+    const r = respuestas[p.id];
+    if (!r) return;
+    if (r.valor === 'noapl') return;
+    maxPts += 10;
+    if (r.valor === 'si')      totalPts += 10;
+    else if (r.valor === 'parcial') totalPts += 5;
+  });
+  const score = maxPts > 0 ? Math.round((totalPts / maxPts) * 100) : 0;
+
+  // Nivel de revisión
+  let nivelEmoji, nivelTexto, nivelDesc;
+  if (score >= 90)      { nivelEmoji = '✅'; nivelTexto = 'Revisión estándar';  nivelDesc = 'Pocas alertas detectadas. CS revisa normalmente.'; }
+  else if (score >= 70) { nivelEmoji = '⚠️'; nivelTexto = 'Revisión detallada'; nivelDesc = 'Se detectaron señales de riesgo moderado.'; }
+  else                  { nivelEmoji = '🔴'; nivelTexto = 'Revisión crítica';   nivelDesc = 'Múltiples alertas. Requiere análisis profundo.'; }
+
+  // Estado por integrante
+  const integEstado = {};
+  integrantesSession.forEach(name => { integEstado[name] = { alertas: [], nivel: 'ok' }; });
+
+  allPregs.forEach(p => {
+    const r = respuestas[p.id];
+    if (!r || r.valor === 'si' || r.valor === 'noapl') return;
+    const afectadas = r.valor === 'no' ? integrantesSession : (r.afectadas || []);
+    afectadas.forEach(name => {
+      if (!integEstado[name]) return;
+      integEstado[name].alertas.push({ pid: p.id, texto: p.texto, val: r.valor });
+      if (r.valor === 'no') integEstado[name].nivel = 'critica';
+      else if (integEstado[name].nivel !== 'critica') integEstado[name].nivel = 'alerta';
+    });
+  });
+
+  const sinAlertas = integrantesSession.filter(n => integEstado[n]?.nivel === 'ok').length;
+  const revisar    = integrantesSession.filter(n => integEstado[n]?.nivel === 'alerta').length;
+  const critica    = integrantesSession.filter(n => integEstado[n]?.nivel === 'critica').length;
+
+  // Dimensiones
+  const dims = [
+    { label: 'Cohesión del grupo',       ids: ['V1','V2','V3'] },
+    { label: 'Ubicabilidad',             ids: ['V4','V5'] },
+    { label: 'Verificabilidad e identidad', ids: ['V6','V7','V8'] },
+    { label: 'Comprensión del producto', ids: ['V9','V10'] },
+  ];
+
+  const dimHTML = dims.map(d => {
+    const allSi = d.ids.every(id => respuestas[id]?.valor === 'si' || respuestas[id]?.valor === 'noapl');
+    const anyNo = d.ids.some(id => respuestas[id]?.valor === 'no');
+    const icon = anyNo ? '⚠️' : allSi ? '✅' : '⚠️';
+    return `<div class="dim-item">${icon} ${d.label}</div>`;
+  }).join('');
+
+  // Integrantes resultado
+  const integHTML = integrantesSession.map((name, ni) => {
+    const est = integEstado[name] || { alertas: [], nivel: 'ok' };
+    const icon = est.nivel === 'ok' ? '✅' : est.nivel === 'critica' ? '🔴' : '⚠️';
+    const statusTxt = est.nivel === 'ok' ? 'Sin alertas' : est.nivel === 'critica' ? 'Señal crítica' : 'Revisar';
+    const tagsHTML = est.alertas.map(a => {
+      const pData = BLOQUES.flatMap(b=>b.preguntas).find(p=>p.id === a.pid);
+      // Find bloque tag
+      const bl = BLOQUES.find(b => b.preguntas.some(p => p.id === a.pid));
+      return `<span class="integ-alert-tag ${a.val==='no'?'alert-tag-red':'alert-tag-amber'}">${bl?.tag || 'Evaluación'}</span>`;
+    }).join('');
+    const detailsHTML = est.alertas.map(a =>
+      `<div class="integ-q-detail">${a.pid} · ${a.texto.substring(0,55)}… — <strong>${OPT_LABEL[a.val]}</strong></div>`
+    ).join('');
+
+    return `<div class="integ-result ${est.nivel}" id="ir-${ni}">
+      <div class="integ-result-header" onclick="toggleIR(${ni})">
+        <div class="integ-result-left">
+          <div>${icon}</div>
+          <div>
+            <div class="integ-result-name">${shortName(name)}</div>
+            <div class="integ-result-status">${statusTxt}</div>
+          </div>
+        </div>
+        ${est.alertas.length > 0 ? '▲' : ''}
+      </div>
+      ${est.alertas.length > 0 ? `<div class="integ-result-detail ${est.alertas.length>0?'show':''}" id="ird-${ni}">
+        ${tagsHTML}
+        ${detailsHTML}
+      </div>` : ''}
+    </div>`;
+  }).join('');
+
+  const comentVal = comentarios || '';
+  const urgVal    = notas.urgencia;
+  const interVal  = notas.interaccion;
+
+  return `
+  <div class="topbar" style="position:sticky;top:0;background:#fff;z-index:50;border-bottom:1px solid var(--border);">
+    <div class="topbar-title">📋 Preguntas para sesión</div>
+    <button class="topbar-close" onclick="confirmClose()">✕</button>
+  </div>
+  <div style="padding:14px 20px 4px;font-size:13px;color:var(--text3);font-weight:500;">Paso 5 de 5</div>
+
+  <div class="nivel-card">
+    <div class="nivel-top">
+      <div class="nivel-label">NIVEL DE REVISIÓN (CS)</div>
+      <div class="nivel-score">SCORE: ${score}/100</div>
+    </div>
+    <div class="nivel-estado">${nivelEmoji} ${nivelTexto}</div>
+    <div class="nivel-desc">${nivelDesc}</div>
+  </div>
+
+  <div class="stats-row">
+    <div class="stat-box green"><div class="stat-num green">${sinAlertas}</div><div class="stat-label">✅ Sin alertas</div></div>
+    <div class="stat-box amber"><div class="stat-num amber">${revisar}</div><div class="stat-label">⚠️ Revisar</div></div>
+    <div class="stat-box red"><div class="stat-num red">${critica}</div><div class="stat-label">🔴 Señal crítica</div></div>
+  </div>
+
+  <div class="dim-card">
+    <div class="dim-title">CHECKLIST POR DIMENSIÓN</div>
+    ${dimHTML}
+  </div>
+
+  <div class="integ-section-title">INTEGRANTES — ESTADO Y ACCIÓN SUGERIDA</div>
+  ${integHTML}
+
+  <div style="margin:12px 20px 0;">
+    <button style="background:none;border:1.5px solid var(--border2);border-radius:20px;padding:8px 18px;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:600;color:var(--text2);cursor:pointer;" onclick="verDetallePreguntas()">Ver detalle por pregunta</button>
+  </div>
+
+  <div class="veredicto-card">
+    <div class="veredicto-label">VEREDICTO (CE)</div>
+    <div class="veredicto-btns">
+      <button class="verd-btn ${veredicto==='aprobar'?'sel-aprobar':''}" id="verd-aprobar" onclick="setVeredicto('aprobar')">✅ Aprobar</button>
+      <button class="verd-btn ${veredicto==='noaprobar'?'sel-noaprobar':''}" id="verd-noaprobar" onclick="setVeredicto('noaprobar')">🔴 No aprobar</button>
+    </div>
+  </div>
+
+  <div class="notas-card">
+    <div class="notas-label">NOTAS PARA CS</div>
+    <div class="notas-sub">Marca solo si lo notaste. No afecta el score.</div>
+    <div class="nota-check ${urgVal?'checked':''}" onclick="toggleNota('urgencia',this)">
+      <div class="nota-checkbox">${urgVal?'<span style="color:#fff;font-size:11px;">✓</span>':''}</div>
+      <div>
+        <div class="nota-check-title">Urgencia</div>
+        <div class="nota-check-sub">Prisa inusual por cerrar.</div>
+      </div>
+    </div>
+    <div class="nota-check ${interVal?'checked':''}" onclick="toggleNota('interaccion',this)">
+      <div class="nota-checkbox">${interVal?'<span style="color:#fff;font-size:11px;">✓</span>':''}</div>
+      <div>
+        <div class="nota-check-title">Interacción no natural</div>
+        <div class="nota-check-sub">No se sienten grupo real.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="comentarios-card">
+    <div class="comentarios-label">COMENTARIOS GENERALES</div>
+    <textarea class="comentarios-ta" placeholder="Observaciones adicionales…" id="ta-comentarios" onchange="comentarios=this.value">${comentVal}</textarea>
+  </div>
+
+  <div class="final-bottom">
+    <button class="final-editar" onclick="renderBloque(${BLOQUES.length-1})">← Editar</button>
+    <button class="final-enviar" onclick="enviarCS()">Enviar a CS →</button>
+  </div>
+  `;
+}
+
+function toggleIR(idx) {
+  const d = document.getElementById(`ird-${idx}`);
+  if (d) d.classList.toggle('show');
+}
+
+function setVeredicto(v) {
+  veredicto = v;
+  const btnA = document.getElementById('verd-aprobar');
+  const btnN = document.getElementById('verd-noaprobar');
+  if (btnA) { btnA.className = 'verd-btn' + (v==='aprobar'?' sel-aprobar':''); }
+  if (btnN) { btnN.className = 'verd-btn' + (v==='noaprobar'?' sel-noaprobar':''); }
+}
+
+function toggleNota(key, el) {
+  notas[key] = !notas[key];
+  el.classList.toggle('checked', notas[key]);
+  const box = el.querySelector('.nota-checkbox');
+  box.innerHTML = notas[key] ? '<span style="color:#fff;font-size:11px;">✓</span>' : '';
+}
+
+function verDetallePreguntas() {
+  showToast('Detalle por pregunta — próximamente');
+}
+
+// ─────────────────────────────────────────────────────────
+// ENVIAR A CS
+// ─────────────────────────────────────────────────────────
+function enviarCS() {
+  const ta = document.getElementById('ta-comentarios');
+  if (ta) comentarios = ta.value;
+
+  if (!veredicto) {
+    showToast('Selecciona un veredicto antes de enviar');
+    return;
+  }
+
+  // Construir fila para el Sheet
+  const now = new Date().toISOString();
+  const allPregs = BLOQUES.flatMap(b => b.preguntas);
+  const row = {
+    fecha: now,
+    grupo: grupoNombre,
+    integrantes: integrantesSession.join(' | '),
+    veredicto: veredicto,
+    nota_urgencia: notas.urgencia ? 'SÍ' : 'NO',
+    nota_interaccion: notas.interaccion ? 'SÍ' : 'NO',
+    comentarios: comentarios,
+  };
+  allPregs.forEach(p => {
+    const r = respuestas[p.id] || {};
+    row[p.id] = r.valor || '';
+    row[p.id + '_afectadas'] = (r.afectadas || []).join(', ');
+    row[p.id + '_comentario'] = r.comentario || '';
+  });
+
+  // Enviar al Sheet via Google Forms o Apps Script
+  // Por ahora guardamos en localStorage como respaldo
+  const historial = JSON.parse(localStorage.getItem('visitas_unicas') || '[]');
+  historial.push(row);
+  localStorage.setItem('visitas_unicas', JSON.stringify(historial));
+
+  // Intentar envío a Google Sheets (si hay endpoint configurado)
+  enviarASheets(row);
+
+  // Mostrar pantalla de éxito
+  document.getElementById('final-screen').classList.remove('show');
+  document.getElementById('bloques-container').style.display = 'none';
+  document.getElementById('success-grupo').textContent = grupoNombre;
+  document.getElementById('success-screen').classList.add('show');
+  document.getElementById('progress-fill').style.width = '100%';
+}
+
+// ─────────────────────────────────────────────────────────
+// ENVÍO A GOOGLE SHEETS
+// Para activar el envío real, sigue estas instrucciones:
+// 1. Abre tu Google Sheet
+// 2. Extensiones → Apps Script
+// 3. Pega el código del doPost que te di
+// 4. Despliega como Web App y copia la URL aquí:
+// ─────────────────────────────────────────────────────────
+const APPS_SCRIPT_URL = ''; // ← pegar URL del Web App aquí
+
+function enviarASheets(data) {
+  if (!APPS_SCRIPT_URL) return; // sin URL configurada, solo guardamos local
+
+  fetch(APPS_SCRIPT_URL, {
+    method: 'POST',
+    mode: 'no-cors',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data)
+  }).catch(() => {}); // no-cors no retorna errores útiles, el envío es fire-and-forget
+}
+
+// ─────────────────────────────────────────────────────────
+// UTILS
+// ─────────────────────────────────────────────────────────
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+function confirmClose() {
+  if (confirm('¿Salir de la visita única? Se perderán las respuestas no enviadas.')) {
+    window.location.href = 'index.html';
+  }
+}
+
+// ─────────────────────────────────────────────────────────
+// ARRANCAR
+// ─────────────────────────────────────────────────────────
+init();
+</script>
+</body>
+</html>
