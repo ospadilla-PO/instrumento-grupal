@@ -1215,26 +1215,14 @@ function buildFinalHTML() {
 
     // Score flow: pre → post-buró → post-visita
     const scoreFlowHTML = `
-    <div style="display:flex;gap:4px;align-items:center;margin-top:8px;flex-wrap:wrap;">
-      <div style="text-align:center;padding:4px 8px;border-radius:8px;background:#F8FAFB;border:1px solid #E2E6ED;">
-        <div style="font-size:9px;color:#8C95A6;font-weight:600;letter-spacing:0.5px;">PRE-BURÓ</div>
-        <div style="font-size:16px;font-weight:800;font-family:'DM Mono',monospace;color:#475467;">${Math.round(sc.ippPreBuro)||'—'}</div>
-        <div style="font-size:10px;font-weight:700;color:${gradoColor(sc.gradoPreBuro)}">${sc.gradoPreBuro}</div>
-      </div>
-      <div style="color:#D0D5DD;font-size:11px;">→</div>
-      <div style="text-align:center;padding:4px 8px;border-radius:8px;background:#F8FAFB;border:1px solid #E2E6ED;">
-        <div style="font-size:9px;color:#8C95A6;font-weight:600;letter-spacing:0.5px;">POST-BURÓ</div>
-        <div style="font-size:16px;font-weight:800;font-family:'DM Mono',monospace;color:${gradoColor(sc.gradoPostBuro)}">${Math.round(sc.postBuro)||'—'}</div>
-        <div style="font-size:10px;font-weight:700;color:${gradoColor(sc.gradoPostBuro)}">${sc.gradoPostBuro}</div>
-      </div>
-      <div style="color:#D0D5DD;font-size:11px;">→</div>
+    <div style="display:flex;gap:6px;align-items:center;margin-top:8px;flex-wrap:wrap;">
       <div style="text-align:center;padding:6px 10px;border-radius:8px;background:${gradoBg(sc.gradoPostVisita)};border:1.5px solid ${gradoColor(sc.gradoPostVisita)}30;">
         <div style="font-size:9px;color:${gradoColor(sc.gradoPostVisita)};font-weight:700;letter-spacing:0.5px;">POST-VISITA</div>
         <div style="font-size:18px;font-weight:800;font-family:'DM Mono',monospace;color:${gradoColor(sc.gradoPostVisita)}">${sc.postVisita}</div>
         <div style="font-size:11px;font-weight:800;color:${gradoColor(sc.gradoPostVisita)}">${sc.gradoPostVisita}</div>
       </div>
-      ${sc.penalidad < 0 ? `<div style="font-size:11px;font-weight:600;color:#B54708;margin-left:4px;">(${sc.penalidad} pts)</div>` : ''}
-      ${cambioGrado ? `<div style="font-size:10px;font-weight:700;color:#B91C1C;background:#FEE2E2;padding:2px 8px;border-radius:10px;margin-left:2px;">⬇ Degradado</div>` : ''}
+      ${sc.penalidad < 0 ? `<div style="font-size:11px;font-weight:600;color:#B54708;">(${sc.penalidad} pts)</div>` : ''}
+      ${cambioGrado ? `<div style="font-size:10px;font-weight:700;color:#B91C1C;background:#FEE2E2;padding:2px 8px;border-radius:10px;">⬇ Degradado</div>` : ''}
     </div>`;
 
     // Alerts detail
