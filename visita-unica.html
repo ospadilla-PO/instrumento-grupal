@@ -1222,7 +1222,6 @@ function buildFinalHTML() {
         <div style="font-size:11px;font-weight:800;color:${gradoColor(sc.gradoPostVisita)}">${sc.gradoPostVisita}</div>
       </div>
       ${sc.penalidad < 0 ? `<div style="font-size:11px;font-weight:600;color:#B54708;">(${sc.penalidad} pts)</div>` : ''}
-      ${cambioGrado ? `<div style="font-size:10px;font-weight:700;color:#B91C1C;background:#FEE2E2;padding:2px 8px;border-radius:10px;">⬇ Degradado</div>` : ''}
     </div>`;
 
     // Alerts detail
@@ -1264,7 +1263,7 @@ function buildFinalHTML() {
 
   return `
   <div class="topbar" style="position:sticky;top:0;background:#fff;z-index:50;border-bottom:1px solid var(--border);">
-    <div class="topbar-title">📋 Preguntas para sesión</div>
+    <div class="topbar-title">📋 Resumen de la sesión</div>
     <button class="topbar-close" onclick="confirmClose()">✕</button>
   </div>
   <div style="padding:14px 20px 4px;font-size:13px;color:var(--text3);font-weight:500;">Paso 5 de 5</div>
