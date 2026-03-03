@@ -456,6 +456,7 @@ body {
 .integ-result-status { font-size: 12px; color: var(--text3); margin-top: 1px; }
 .integ-result-detail { padding: 0 14px 10px; display: none; }
 .integ-result-detail.show { display: block; }
+.integ-score-flow { padding: 0 14px 10px; }
 .integ-alert-tag {
   display: inline-block; font-size: 11px; font-weight: 600;
   padding: 3px 10px; border-radius: 20px; margin-bottom: 8px;
@@ -696,6 +697,23 @@ let grupoNombre   = '';
 let integrantesAll = [];   // todos los del grupo
 let integrantesSession = []; // los que asistieron (editables)
 let respuestas    = {};    // { V1: { valor:'parcial', afectadas:['Nombre'], comentario:'' }, ... }
+let integrantesData = {};  // { 'NOMBRE COMPLETO': { ipp_score, ipp_grado, cdc_score_post, cdc_grado_final, ap_paterno } }
+
+// ── PESOS RECALIBRADOS (Visita Única → resta al IPP post-buró) ──
+const VU_PESOS = {
+  V1:  -5,   // Atención, presencia — señal blanda
+  V2:  -12,  // Personas ajenas — fraude directo (SIN TOPE)
+  V3:  -12,  // Respondió por sí misma — fraude (SIN TOPE)
+  V4:  -5,   // Describe dónde vive — cohesión/garantía solidaria
+  V5:  -5,   // Describe negocio — valida ingreso cruzado
+  V6:  -6,   // Identidad verificada (INE) — ya penaliza en pre-buró, mantener
+  V7:  -7,   // Negocio consistente — detecta ingreso ficticio
+  V8:  -4,   // Reconocen deudas — buró ya captura, evitar doble castigo
+  V9:  -7,   // Entiende crédito solidario — importante pero entrenable
+  V10: -7,   // Aceptan responsabilidad solidaria — imp. pero entrenable
+};
+const VU_FRAUDE_IDS = ['V2', 'V3']; // Sin tope cuando = "no"
+const VU_TOPE_DEGRADACION = -40;    // Máximo castigo si NO hay fraude confirmado
 let bloqueActual  = 0;     // 0..3 = bloques, 4 = final
 let veredicto     = null;
 let notas         = { urgencia: false, interaccion: false };
@@ -755,18 +773,35 @@ function cargarIntegrantes() {
     const headers = data.table.cols.map(c => (c.label || c.id || '').trim().toLowerCase());
     const colNombre   = headers.indexOf('nombre');
     const colAP       = headers.indexOf('apellido_paterno');
+    const colAM       = headers.indexOf('apellido_materno');
     const colGrupo    = headers.indexOf('nombre del grupo final');
+    const colIppScore = headers.indexOf('ipp_score');
+    const colIppGrado = headers.indexOf('ipp_grado');
+    const colCdcPost  = headers.indexOf('cdc_score_post_buro');
+    const colCdcGrado = headers.indexOf('cdc_grado_final');
+    const colCdcPreG  = headers.indexOf('cdc_grado_pre_buro');
 
     const target = grupoNombre.trim().toUpperCase();
     integrantesAll = [];
+    integrantesData = {};
 
     data.table.rows.forEach(row => {
       const g = (row.c[colGrupo]?.v || '').toString().trim().toUpperCase();
       if (g === target) {
         const nombre = (row.c[colNombre]?.v || '').toString().trim();
         const ap     = (row.c[colAP]?.v     || '').toString().trim();
-        const full   = [nombre, ap].filter(Boolean).join(' ');
-        if (full) integrantesAll.push(full);
+        const am     = (row.c[colAM]?.v     || '').toString().trim();
+        const full   = [nombre, ap, am].filter(Boolean).join(' ');
+        if (full) {
+          integrantesAll.push(full);
+          integrantesData[full] = {
+            ipp_score:       parseFloat(row.c[colIppScore]?.v) || 0,
+            ipp_grado:       (row.c[colIppGrado]?.v || '').toString().trim(),
+            cdc_score_post:  parseFloat(row.c[colCdcPost]?.v) || 0,
+            cdc_grado_final: (row.c[colCdcGrado]?.v || '').toString().trim(),
+            cdc_grado_pre:   (row.c[colCdcPreG]?.v || '').toString().trim(),
+          };
+        }
       }
     });
 
@@ -1044,11 +1079,10 @@ function renderFinal() {
 }
 
 function buildFinalHTML() {
-  // Calcular score y estados por integrante
+  // ── Calcular penalizaciones por integrante ──
   const allPregs = BLOQUES.flatMap(b => b.preguntas);
-  const totalPregs = allPregs.length;
 
-  // Score: si = 10pts, parcial = 5pts, no = 0, noapl = skip
+  // Score de visita (legacy — para resumen general)
   let totalPts = 0, maxPts = 0;
   allPregs.forEach(p => {
     const r = respuestas[p.id];
@@ -1058,42 +1092,109 @@ function buildFinalHTML() {
     if (r.valor === 'si')      totalPts += 10;
     else if (r.valor === 'parcial') totalPts += 5;
   });
-  const score = maxPts > 0 ? Math.round((totalPts / maxPts) * 100) : 0;
+  const scoreVisita = maxPts > 0 ? Math.round((totalPts / maxPts) * 100) : 0;
 
-  // Nivel de revisión
-  let nivelEmoji, nivelTexto, nivelDesc;
-  if (score >= 90)      { nivelEmoji = '✅'; nivelTexto = 'Revisión estándar';  nivelDesc = 'Pocas alertas detectadas. CS revisa normalmente.'; }
-  else if (score >= 70) { nivelEmoji = '⚠️'; nivelTexto = 'Revisión detallada'; nivelDesc = 'Se detectaron señales de riesgo moderado.'; }
-  else                  { nivelEmoji = '🔴'; nivelTexto = 'Revisión crítica';   nivelDesc = 'Múltiples alertas. Requiere análisis profundo.'; }
-
-  // Estado por integrante
+  // ── CÁLCULO POST-VISITA POR PERSONA ──
   const integEstado = {};
-  integrantesSession.forEach(name => { integEstado[name] = { alertas: [], nivel: 'ok' }; });
+  const integScores = {}; // { name: { postBuro, penalidad, postVisita, gradoPostVisita, fraude, alertas[] } }
 
+  integrantesSession.forEach(name => {
+    const datos = integrantesData[name] || {};
+    const postBuro = datos.cdc_score_post || datos.ipp_score || 0;
+    integEstado[name] = { alertas: [], nivel: 'ok' };
+    integScores[name] = {
+      ippPreBuro:     datos.ipp_score || 0,
+      gradoPreBuro:   datos.ipp_grado || datos.cdc_grado_pre || '—',
+      postBuro:       postBuro,
+      gradoPostBuro:  datos.cdc_grado_final || datos.ipp_grado || '—',
+      penalidad:      0,
+      fraude:         false,
+      postVisita:     postBuro,
+      gradoPostVisita:'—',
+      alertas:        [],
+    };
+  });
+
+  // Calcular penalizaciones
   allPregs.forEach(p => {
     const r = respuestas[p.id];
     if (!r || r.valor === 'si' || r.valor === 'noapl') return;
-    const afectadas = r.valor === 'no' ? integrantesSession : (r.afectadas || []);
-    afectadas.forEach(name => {
-      if (!integEstado[name]) return;
-      integEstado[name].alertas.push({ pid: p.id, texto: p.texto, val: r.valor });
-      if (r.valor === 'no') integEstado[name].nivel = 'critica';
-      else if (integEstado[name].nivel !== 'critica') integEstado[name].nivel = 'alerta';
-    });
+
+    const peso = VU_PESOS[p.id] || 0;
+    const esFraude = VU_FRAUDE_IDS.includes(p.id);
+
+    if (r.valor === 'no') {
+      // "No — nadie" → afecta a todas
+      integrantesSession.forEach(name => {
+        if (!integEstado[name]) return;
+        integEstado[name].alertas.push({ pid: p.id, texto: p.texto, val: 'no' });
+        integEstado[name].nivel = 'critica';
+        integScores[name].penalidad += peso;
+        integScores[name].alertas.push({ pid: p.id, peso, val: 'no' });
+        if (esFraude) integScores[name].fraude = true;
+      });
+    } else if (r.valor === 'parcial') {
+      const afectadas = (r.afectadas && r.afectadas.length > 0) ? r.afectadas : integrantesSession;
+      afectadas.forEach(name => {
+        const matched = integrantesSession.find(full =>
+          full === name || full.toUpperCase().includes(name.toUpperCase())
+        ) || name;
+        if (!integEstado[matched]) return;
+        integEstado[matched].alertas.push({ pid: p.id, texto: p.texto, val: 'parcial' });
+        if (integEstado[matched].nivel !== 'critica') integEstado[matched].nivel = 'alerta';
+        // Parcial = mitad del castigo (redondeado)
+        const penParcial = Math.round(peso / 2);
+        integScores[matched].penalidad += penParcial;
+        integScores[matched].alertas.push({ pid: p.id, peso: penParcial, val: 'parcial' });
+        if (esFraude) integScores[matched].fraude = true;
+      });
+    }
   });
 
+  // Aplicar tope y calcular score final
+  function calcGrado(s) {
+    if (s >= 75) return 'A';
+    if (s >= 60) return 'B';
+    if (s >= 45) return 'C';
+    return 'D';
+  }
+
+  integrantesSession.forEach(name => {
+    const sc = integScores[name];
+    let pen = sc.penalidad; // ya es negativo
+    // Aplicar tope SOLO si no hay fraude confirmado
+    if (!sc.fraude && pen < VU_TOPE_DEGRADACION) {
+      pen = VU_TOPE_DEGRADACION;
+    }
+    sc.penalidad = pen;
+    sc.postVisita = Math.max(Math.round(sc.postBuro + pen), 0);
+    sc.gradoPostVisita = calcGrado(sc.postVisita);
+  });
+
+  // Contadores
   const sinAlertas = integrantesSession.filter(n => integEstado[n]?.nivel === 'ok').length;
   const revisar    = integrantesSession.filter(n => integEstado[n]?.nivel === 'alerta').length;
   const critica    = integrantesSession.filter(n => integEstado[n]?.nivel === 'critica').length;
 
-  // Dimensiones
+  // Contar degradaciones de grado
+  const degradados = integrantesSession.filter(n => {
+    const sc = integScores[n];
+    return sc.gradoPostVisita !== sc.gradoPostBuro && sc.penalidad < 0;
+  }).length;
+
+  // Nivel de revisión
+  let nivelEmoji, nivelTexto, nivelDesc;
+  if (scoreVisita >= 90)      { nivelEmoji = '✅'; nivelTexto = 'Revisión estándar';  nivelDesc = 'Pocas alertas detectadas. CS revisa normalmente.'; }
+  else if (scoreVisita >= 70) { nivelEmoji = '⚠️'; nivelTexto = 'Revisión detallada'; nivelDesc = 'Se detectaron señales de riesgo moderado.'; }
+  else                        { nivelEmoji = '🔴'; nivelTexto = 'Revisión crítica';   nivelDesc = 'Múltiples alertas. Requiere análisis profundo.'; }
+
+  // Dimensiones checklist
   const dims = [
     { label: 'Cohesión del grupo',       ids: ['V1','V2','V3'] },
     { label: 'Ubicabilidad',             ids: ['V4','V5'] },
     { label: 'Verificabilidad e identidad', ids: ['V6','V7','V8'] },
     { label: 'Comprensión del producto', ids: ['V9','V10'] },
   ];
-
   const dimHTML = dims.map(d => {
     const allSi = d.ids.every(id => respuestas[id]?.valor === 'si' || respuestas[id]?.valor === 'noapl');
     const anyNo = d.ids.some(id => respuestas[id]?.valor === 'no');
@@ -1101,20 +1202,51 @@ function buildFinalHTML() {
     return `<div class="dim-item">${icon} ${d.label}</div>`;
   }).join('');
 
-  // Integrantes resultado
+  // ── Integrantes con 3 scores ──
+  const gradoColor = g => ({A:'#166534',B:'#854D0E',C:'#C2410C',D:'#B91C1C'}[g]||'#6B7280');
+  const gradoBg    = g => ({A:'#DCFCE7',B:'#FEF9C3',C:'#FFF7ED',D:'#FEF2F2'}[g]||'#F3F4F6');
+
   const integHTML = integrantesSession.map((name, ni) => {
     const est = integEstado[name] || { alertas: [], nivel: 'ok' };
+    const sc  = integScores[name];
     const icon = est.nivel === 'ok' ? '✅' : est.nivel === 'critica' ? '🔴' : '⚠️';
     const statusTxt = est.nivel === 'ok' ? 'Sin alertas' : est.nivel === 'critica' ? 'Señal crítica' : 'Revisar';
+    const cambioGrado = sc.gradoPostVisita !== sc.gradoPostBuro;
+
+    // Score flow: pre → post-buró → post-visita
+    const scoreFlowHTML = `
+    <div style="display:flex;gap:4px;align-items:center;margin-top:8px;flex-wrap:wrap;">
+      <div style="text-align:center;padding:4px 8px;border-radius:8px;background:#F8FAFB;border:1px solid #E2E6ED;">
+        <div style="font-size:9px;color:#8C95A6;font-weight:600;letter-spacing:0.5px;">PRE-BURÓ</div>
+        <div style="font-size:16px;font-weight:800;font-family:'DM Mono',monospace;color:#475467;">${Math.round(sc.ippPreBuro)||'—'}</div>
+        <div style="font-size:10px;font-weight:700;color:${gradoColor(sc.gradoPreBuro)}">${sc.gradoPreBuro}</div>
+      </div>
+      <div style="color:#D0D5DD;font-size:11px;">→</div>
+      <div style="text-align:center;padding:4px 8px;border-radius:8px;background:#F8FAFB;border:1px solid #E2E6ED;">
+        <div style="font-size:9px;color:#8C95A6;font-weight:600;letter-spacing:0.5px;">POST-BURÓ</div>
+        <div style="font-size:16px;font-weight:800;font-family:'DM Mono',monospace;color:${gradoColor(sc.gradoPostBuro)}">${Math.round(sc.postBuro)||'—'}</div>
+        <div style="font-size:10px;font-weight:700;color:${gradoColor(sc.gradoPostBuro)}">${sc.gradoPostBuro}</div>
+      </div>
+      <div style="color:#D0D5DD;font-size:11px;">→</div>
+      <div style="text-align:center;padding:6px 10px;border-radius:8px;background:${gradoBg(sc.gradoPostVisita)};border:1.5px solid ${gradoColor(sc.gradoPostVisita)}30;">
+        <div style="font-size:9px;color:${gradoColor(sc.gradoPostVisita)};font-weight:700;letter-spacing:0.5px;">POST-VISITA</div>
+        <div style="font-size:18px;font-weight:800;font-family:'DM Mono',monospace;color:${gradoColor(sc.gradoPostVisita)}">${sc.postVisita}</div>
+        <div style="font-size:11px;font-weight:800;color:${gradoColor(sc.gradoPostVisita)}">${sc.gradoPostVisita}</div>
+      </div>
+      ${sc.penalidad < 0 ? `<div style="font-size:11px;font-weight:600;color:#B54708;margin-left:4px;">(${sc.penalidad} pts)</div>` : ''}
+      ${cambioGrado ? `<div style="font-size:10px;font-weight:700;color:#B91C1C;background:#FEE2E2;padding:2px 8px;border-radius:10px;margin-left:2px;">⬇ Degradado</div>` : ''}
+    </div>`;
+
+    // Alerts detail
     const tagsHTML = est.alertas.map(a => {
-      const pData = BLOQUES.flatMap(b=>b.preguntas).find(p=>p.id === a.pid);
-      // Find bloque tag
       const bl = BLOQUES.find(b => b.preguntas.some(p => p.id === a.pid));
       return `<span class="integ-alert-tag ${a.val==='no'?'alert-tag-red':'alert-tag-amber'}">${bl?.tag || 'Evaluación'}</span>`;
     }).join('');
-    const detailsHTML = est.alertas.map(a =>
-      `<div class="integ-q-detail">${a.pid} · ${a.texto.substring(0,55)}… — <strong>${OPT_LABEL[a.val]}</strong></div>`
-    ).join('');
+    const detailsHTML = est.alertas.map(a => {
+      const pesoInfo = integScores[name].alertas.find(al => al.pid === a.pid);
+      const pesoTxt = pesoInfo ? ` (${pesoInfo.peso} pts)` : '';
+      return `<div class="integ-q-detail">${a.pid} · ${a.texto.substring(0,55)}… — <strong>${OPT_LABEL[a.val]}</strong><span style="color:#B54708;font-size:11px;">${pesoTxt}</span></div>`;
+    }).join('');
 
     return `<div class="integ-result ${est.nivel}" id="ir-${ni}">
       <div class="integ-result-header" onclick="toggleIR(${ni})">
@@ -1127,6 +1259,7 @@ function buildFinalHTML() {
         </div>
         ${est.alertas.length > 0 ? '▲' : ''}
       </div>
+      ${scoreFlowHTML ? `<div style="padding:0 14px 10px;">${scoreFlowHTML}</div>` : ''}
       ${est.alertas.length > 0 ? `<div class="integ-result-detail ${est.alertas.length>0?'show':''}" id="ird-${ni}">
         ${tagsHTML}
         ${detailsHTML}
@@ -1138,6 +1271,9 @@ function buildFinalHTML() {
   const urgVal    = notas.urgencia;
   const interVal  = notas.interaccion;
 
+  // Guardar scores calculados en variable global para envío
+  window._vuScoresCalc = integScores;
+
   return `
   <div class="topbar" style="position:sticky;top:0;background:#fff;z-index:50;border-bottom:1px solid var(--border);">
     <div class="topbar-title">📋 Preguntas para sesión</div>
@@ -1148,10 +1284,11 @@ function buildFinalHTML() {
   <div class="nivel-card">
     <div class="nivel-top">
       <div class="nivel-label">NIVEL DE REVISIÓN (CS)</div>
-      <div class="nivel-score">SCORE: ${score}/100</div>
+      <div class="nivel-score">SCORE VISITA: ${scoreVisita}/100</div>
     </div>
     <div class="nivel-estado">${nivelEmoji} ${nivelTexto}</div>
     <div class="nivel-desc">${nivelDesc}</div>
+    ${degradados > 0 ? `<div style="margin-top:8px;padding:8px 12px;background:#FEF2F2;border:1px solid #FECDCA;border-radius:8px;font-size:12px;font-weight:600;color:#B91C1C;">⬇ ${degradados} integrante(s) degradaron de grado por hallazgos de visita</div>` : ''}
   </div>
 
   <div class="stats-row">
@@ -1250,6 +1387,7 @@ function enviarCS() {
   // Construir fila para el Sheet
   const now = new Date().toISOString();
   const allPregs = BLOQUES.flatMap(b => b.preguntas);
+  const vuScores = window._vuScoresCalc || {};
   const row = {
     fecha: now,
     grupo: grupoNombre,
@@ -1265,6 +1403,13 @@ function enviarCS() {
     row[p.id + '_afectadas'] = (r.afectadas || []).join(', ');
     row[p.id + '_comentario'] = r.comentario || '';
   });
+
+  // Agregar scores post-visita por persona
+  const scoresResumen = integrantesSession.map(name => {
+    const sc = vuScores[name] || {};
+    return `${shortName(name)}:${sc.postBuro||0}→${sc.postVisita||0}(${sc.gradoPostVisita||'?'})`;
+  });
+  row['scores_post_visita'] = scoresResumen.join(' | ');
 
   // Enviar al Sheet via Google Forms o Apps Script
   // Por ahora guardamos en localStorage como respaldo
