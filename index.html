@@ -725,6 +725,7 @@ function buildColMap(headers) {
   COL.cdc_total_cuentas= find('cdc_total_cuentas');
   COL.cdc_cuentas_corr = find('cdc_cuentas_corriente');
   COL.cdc_cuentas_atr  = find('cdc_cuentas_atraso');
+  COL.cdc_cuentas_activas = find('cdc_cuentas_activas');
   COL.cdc_saldo_total  = find('cdc_saldo_total');
   COL.cdc_saldo_vencido= find('cdc_saldo_vencido_total');
   COL.cdc_max_atraso   = find('cdc_max_peor_atraso');
@@ -892,51 +893,42 @@ function renderAlertas(rows) {
   let activas = 0;
   const n = rows.length;
 
-  // ── Regla 1: Deuda individual alta (>$25K)
-  const r1 = rows.filter(r => num(r,'cdc_saldo_total') > 25000);
-  if (r1.length > 0) {
-    activas++;
-    html += `<div class="alerta-item">
-      <div class="alerta-header">
-        <div class="alerta-nombre">Deuda individual alta</div>
-        <div class="alerta-count">${r1.length} / ${n}</div>
-      </div>
-      <div class="alerta-desc">${r1.length} integrante(s) con deuda total mayor a $25,000.</div>
-      <table class="alerta-table">
-        <tr><th>Integrante</th><th>Deuda total</th></tr>
-        ${r1.map(r => `<tr><td>${fullName(r)}</td><td>${fmt(num(r,'cdc_saldo_total'))}</td></tr>`).join('')}
-      </table>
-      <div class="alerta-footer">Deuda individual &gt; $25K: ${r1.length} integrante(s)</div>
-    </div>`;
-  } else {
-    html += `<div class="alerta-item">
-      <div class="alerta-header"><div class="alerta-nombre">Deuda individual alta</div><div class="alerta-count">0 / ${n}</div></div>
-      <div class="no-alerta">✅ Ningún integrante supera $25,000 de deuda total.</div>
-    </div>`;
-  }
+  // ── Análisis de deuda individual (tabla única: todos los integrantes)
+  const conDeuda = rows.filter(r => num(r,'cdc_saldo_total') > 0);
+  const sinDeuda = rows.filter(r => num(r,'cdc_saldo_total') === 0);
+  // Ordenar: mayor deuda primero
+  const tablaDeuda = [...rows].sort((a,b) => num(b,'cdc_saldo_total') - num(a,'cdc_saldo_total'));
+  if (conDeuda.length > 0) { activas++; }
 
-  // ── Regla 2: 3+ instituciones con deuda >$15K
-  const r2 = rows.filter(r => num(r,'cdc_total_cuentas') >= 3 && num(r,'cdc_saldo_total') > 15000);
-  if (r2.length > 0) {
-    activas++;
-    html += `<div class="alerta-item">
-      <div class="alerta-header">
-        <div class="alerta-nombre">Múltiples instituciones con deuda</div>
-        <div class="alerta-count">${r2.length} / ${n}</div>
-      </div>
-      <div class="alerta-desc">${r2.length} integrante(s) con 3+ cuentas y deuda total mayor a $15,000.</div>
-      <table class="alerta-table">
-        <tr><th>Integrante</th><th>Cuentas</th><th>Deuda</th></tr>
-        ${r2.map(r => `<tr><td>${fullName(r)}</td><td>${num(r,'cdc_total_cuentas')}</td><td>${fmt(num(r,'cdc_saldo_total'))}</td></tr>`).join('')}
-      </table>
-      <div class="alerta-footer">3+ instituciones con deuda: ${r2.length} integrante(s)</div>
-    </div>`;
-  } else {
-    html += `<div class="alerta-item">
-      <div class="alerta-header"><div class="alerta-nombre">Múltiples instituciones con deuda</div><div class="alerta-count">0 / ${n}</div></div>
-      <div class="no-alerta">✅ Sin integrantes con 3+ cuentas y deuda relevante.</div>
-    </div>`;
-  }
+  html += `<div class="alerta-item">
+    <div class="alerta-header">
+      <div class="alerta-nombre">Análisis de deuda individual</div>
+      <div class="alerta-count">${conDeuda.length} / ${n} con deuda</div>
+    </div>
+    ${conDeuda.length > 0
+      ? `<div class="alerta-desc">${conDeuda.length} integrante(s) con deuda activa registrada en buró.</div>`
+      : `<div class="no-alerta" style="margin-bottom:10px">✅ Ningún integrante tiene deuda activa en buró.</div>`
+    }
+    <table class="alerta-table">
+      <tr><th>Integrante</th><th style="text-align:center">Cuentas activas</th><th>Deuda activa</th></tr>
+      ${tablaDeuda.map(r => {
+        const deuda    = num(r,'cdc_saldo_total');
+        const cuentas  = num(r,'cdc_cuentas_activas');
+        const deudaStr = deuda > 0 ? fmt(deuda) : '—';
+        const cuentaStr = cuentas > 0 ? cuentas : '—';
+        const rowStyle = deuda > 25000 ? 'color:var(--red);font-weight:600' : '';
+        return `<tr>
+          <td>${fullName(r)}</td>
+          <td style="text-align:center;font-family:'DM Mono',monospace">${cuentaStr}</td>
+          <td style="${rowStyle}">${deudaStr}</td>
+        </tr>`;
+      }).join('')}
+    </table>
+    ${conDeuda.length > 0
+      ? `<div class="alerta-footer">En rojo: deuda individual &gt; $25,000 · Cuentas activas = cuentas con saldo vigente</div>`
+      : ''
+    }
+  </div>`;
 
   // ── Regla 3: Posibles familiares (apellidos compartidos ≥3)
   const apellidos = rows.map(r => [v(r,'ap_paterno'), v(r,'ap_materno')].filter(Boolean));
